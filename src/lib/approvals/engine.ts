@@ -1,6 +1,6 @@
 import { SupabaseClient } from '@supabase/supabase-js'
 import { sendSms } from '../twilio/client'
-import { inngest } from '../inngest/client'
+import { handleApprovalResolved } from '../background/process-approval'
 
 export interface CreateApprovalOptions {
   tenantId: string
@@ -60,15 +60,7 @@ export async function createApproval(
     }
   }
 
-  // Schedule expiration check via Inngest
-  await inngest.send({
-    name: 'approval/created',
-    data: {
-      approvalId,
-      tenantId: options.tenantId,
-      expiresAt,
-    },
-  })
+  // Approval expiration is now handled by the expire-approvals cron job
 
   return approvalId
 }
@@ -110,19 +102,16 @@ export async function resolveApproval(
     })
     .eq('id', approvalId)
 
-  // Notify via Inngest for follow-up actions
-  await inngest.send({
-    name: 'approval/resolved',
-    data: {
-      approvalId,
-      tenantId: approval.tenant_id,
-      conversationId: approval.conversation_id,
-      clientId: approval.client_id,
-      actionType: approval.action_type,
-      actionDetails: approval.action_details,
-      decision,
-    },
-  })
+  // Log the resolution (fire and forget)
+  handleApprovalResolved({
+    approvalId,
+    tenantId: approval.tenant_id,
+    conversationId: approval.conversation_id,
+    clientId: approval.client_id,
+    actionType: approval.action_type,
+    actionDetails: approval.action_details,
+    decision,
+  }).catch(err => console.error('Approval resolution logging error:', err))
 
   return true
 }

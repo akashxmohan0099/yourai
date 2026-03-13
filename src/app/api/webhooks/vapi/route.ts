@@ -1,19 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { inngest } from '@/lib/inngest/client'
+import { processVapiEvent } from '@/lib/background/process-vapi-event'
 
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
 
-    // Send to Inngest for async processing
-    await inngest.send({
-      name: 'vapi/event',
-      data: {
-        type: body.message?.type || 'unknown',
-        callId: body.message?.call?.id,
-        payload: body,
-      },
-    })
+    // Fire and forget — don't block the webhook response
+    processVapiEvent({
+      type: body.message?.type || 'unknown',
+      callId: body.message?.call?.id,
+      payload: body,
+    }).catch(err => console.error('Vapi event processing error:', err))
 
     return NextResponse.json({ received: true })
   } catch (error) {

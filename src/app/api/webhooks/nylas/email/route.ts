@@ -1,5 +1,5 @@
 import { createAdminClient } from '@/lib/supabase/admin'
-import { inngest } from '@/lib/inngest/client'
+import { processInboundEmail } from '@/lib/background/process-email'
 
 export async function GET(request: Request) {
   const url = new URL(request.url)
@@ -29,20 +29,17 @@ export async function POST(request: Request) {
 
         if (!config) continue
 
-        // Send to Inngest for processing
-        await inngest.send({
-          name: 'email/message.received',
-          data: {
-            tenantId: config.tenant_id,
-            messageId: message.id,
-            threadId: message.thread_id,
-            from: message.from?.[0]?.email,
-            fromName: message.from?.[0]?.name,
-            subject: message.subject,
-            body: message.body || message.snippet || '',
-            grantId,
-          },
-        })
+        // Process email directly (fire and forget)
+        processInboundEmail({
+          tenantId: config.tenant_id,
+          messageId: message.id,
+          threadId: message.thread_id,
+          from: message.from?.[0]?.email,
+          fromName: message.from?.[0]?.name,
+          subject: message.subject,
+          body: message.body || message.snippet || '',
+          grantId,
+        }).catch(err => console.error('Email processing error:', err))
       }
     }
 
