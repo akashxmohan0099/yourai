@@ -20,6 +20,16 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    // Debug: check env vars are present
+    const hasUrl = !!process.env.NEXT_PUBLIC_SUPABASE_URL
+    const hasServiceKey = !!process.env.SUPABASE_SERVICE_ROLE_KEY
+    if (!hasUrl || !hasServiceKey) {
+      return NextResponse.json(
+        { error: 'Missing env vars', hasUrl, hasServiceKey },
+        { status: 500 }
+      )
+    }
+
     const supabase = createAdminClient()
     const baseSlug = generateSlug(businessName)
 
@@ -75,10 +85,14 @@ export async function POST(request: NextRequest) {
     if (configError) throw configError
 
     return NextResponse.json({ tenant })
-  } catch (error) {
+  } catch (error: any) {
     console.error('Account setup error:', error)
     return NextResponse.json(
-      { error: 'Failed to set up account' },
+      {
+        error: 'Failed to set up account',
+        details: error?.message || error?.code || String(error),
+        hint: error?.hint || null,
+      },
       { status: 500 }
     )
   }
