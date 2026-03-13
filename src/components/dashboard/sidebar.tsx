@@ -15,6 +15,10 @@ import {
   Calendar,
   Bot,
   Newspaper,
+  FileText,
+  Receipt,
+  Target,
+  Megaphone,
 } from 'lucide-react'
 import { useState } from 'react'
 import { cn } from '@/lib/utils'
@@ -30,6 +34,10 @@ const navigation = [
   { name: 'Schedule', href: '/schedule', icon: Calendar },
   { name: 'Conversations', href: '/conversations', icon: MessageSquare },
   { name: 'Clients', href: '/clients', icon: Users },
+  { name: 'Quotes', href: '/quotes', icon: FileText },
+  { name: 'Invoices', href: '/invoices', icon: Receipt },
+  { name: 'Leads', href: '/leads', icon: Target },
+  { name: 'Campaigns', href: '/campaigns', icon: Megaphone },
   { name: 'Approvals', href: '/approvals', icon: ShieldCheck },
   { name: 'Briefings', href: '/briefings', icon: Newspaper },
   { name: 'Channels', href: '/channels', icon: Radio },

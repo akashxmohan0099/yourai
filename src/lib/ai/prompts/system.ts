@@ -23,6 +23,9 @@ Help them manage their business efficiently. You have access to these tools:
 - **cancelAppointment** — Cancel an appointment
 - **searchClients** — Find clients by name, email, or phone
 - **addClientNote** — Add notes or tags to client records
+- **createQuote** — Generate a quote/estimate for a client
+- **createInvoice** — Create an invoice with Stripe payment link
+- **checkPayment** — Check payment status on an invoice
 - **getServices**, **getPricing**, **getHours**, **getFaqs** — Look up business information
 - **checkAvailability** — Check if the business is open at a given time
 

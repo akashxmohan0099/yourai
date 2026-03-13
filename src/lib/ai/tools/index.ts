@@ -11,6 +11,9 @@ import { cancelAppointmentTool } from './cancel-appointment'
 import { getScheduleTool } from './get-schedule'
 import { searchClientsTool } from './search-clients'
 import { addClientNoteTool } from './add-client-note'
+import { createQuoteTool } from './create-quote'
+import { createInvoiceTool } from './create-invoice'
+import { checkPaymentTool } from './check-payment'
 import { SupabaseClient } from '@supabase/supabase-js'
 
 export function getCustomerTools(
@@ -51,6 +54,9 @@ export function getOwnerTools(
     tools.getSchedule = getScheduleTool(supabase, tenantId)
     tools.searchClients = searchClientsTool(supabase, tenantId)
     tools.addClientNote = addClientNoteTool(supabase, tenantId)
+    tools.createQuote = createQuoteTool(supabase, tenantId)
+    tools.createInvoice = createInvoiceTool(supabase, tenantId)
+    tools.checkPayment = checkPaymentTool(supabase, tenantId)
   }
 
   if (supabase && tenantId && conversationId) {
