@@ -26,7 +26,7 @@ export async function POST(request: NextRequest) {
 
     const tenantId = profile.tenant_id
     const body = await request.json()
-    const { assistantId, phoneNumberId, voiceEnabled } = body
+    const { assistantId, phoneNumberId, voiceEnabled, ownerAssistantId } = body
 
     const vapi = getVapiClient()
     const updates: Record<string, unknown> = {}
@@ -44,6 +44,21 @@ export async function POST(request: NextRequest) {
         }
       }
       updates.vapi_assistant_id = assistantId || null
+    }
+
+    // If ownerAssistantId provided, validate it exists on Vapi then save
+    if (ownerAssistantId !== undefined) {
+      if (ownerAssistantId) {
+        try {
+          await vapi.getAssistant(ownerAssistantId)
+        } catch {
+          return NextResponse.json(
+            { error: 'Invalid owner assistant ID. Could not find assistant on Vapi.' },
+            { status: 400 }
+          )
+        }
+      }
+      updates.vapi_owner_assistant_id = ownerAssistantId || null
     }
 
     // If phoneNumberId provided, assign it to the assistant via Vapi API
@@ -110,7 +125,7 @@ export async function POST(request: NextRequest) {
       .from('business_config')
       .update(updates)
       .eq('tenant_id', tenantId)
-      .select('vapi_assistant_id, vapi_phone_number_id, voice_enabled')
+      .select('vapi_assistant_id, vapi_phone_number_id, vapi_owner_assistant_id, voice_enabled')
       .single()
 
     if (updateError) {

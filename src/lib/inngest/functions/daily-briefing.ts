@@ -153,6 +153,8 @@ Format as a brief, friendly morning update. Start with a greeting and include th
           supabase,
         })
 
+        const channels = config.briefing_channels || ['email']
+
         // Save briefing
         await supabase.from('briefings').insert({
           tenant_id: tenantId,
@@ -161,11 +163,22 @@ Format as a brief, friendly morning update. Start with a greeting and include th
             text: briefingText,
             data: briefingData,
           },
-          delivered_via: config.briefing_channels || ['email'],
+          delivered_via: channels,
         })
 
+        // Deliver via voice if configured
+        if (channels.includes('voice')) {
+          await inngest.send({
+            name: 'yourai/voice-briefing.requested',
+            data: {
+              tenantId,
+              briefingText,
+            },
+          })
+        }
+
         // TODO: Phase 3+ — deliver via Nylas email and/or Twilio SMS
-        // For now, briefing is stored and viewable on dashboard
+        // For now, briefing is also stored and viewable on dashboard
 
         generated++
       })

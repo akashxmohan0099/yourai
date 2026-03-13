@@ -10,6 +10,7 @@ import {
   rebookingNudgeCampaign,
   invoiceReminderCampaign,
 } from '@/lib/inngest/functions/retention-campaigns'
+import { voiceBriefing } from '@/lib/inngest/functions/voice-briefing'
 
 export const { GET, POST, PUT } = serve({
   client: inngest,
@@ -23,5 +24,6 @@ export const { GET, POST, PUT } = serve({
     reviewRequestCampaign,
     rebookingNudgeCampaign,
     invoiceReminderCampaign,
+    voiceBriefing,
   ],
 })

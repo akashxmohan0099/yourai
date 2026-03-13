@@ -4,9 +4,46 @@ import { buildBusinessContext } from '@/lib/ai/context-builder'
 import { runAgentSync } from '@/lib/ai/agent'
 import { normalizeIncomingMessage, resolveTenantFromChannel } from '@/lib/channels/normalizer'
 import type { VapiServerMessage, VapiServerResponse } from '@/lib/vapi/types'
+import { createBusinessSquad, findSquadMember } from '@/lib/vapi/squads'
 import { ModelMessage } from 'ai'
+import { SupabaseClient } from '@supabase/supabase-js'
 
 export const maxDuration = 10 // Voice requires fast responses
+
+/**
+ * Detect whether an incoming call is from the business owner/manager.
+ * Checks both the caller's phone number against owner_notification_phone
+ * and the Vapi assistant ID against vapi_owner_assistant_id.
+ */
+async function isOwnerCall(
+  supabase: SupabaseClient,
+  tenantId: string,
+  callerPhone: string | undefined,
+  assistantId: string | undefined
+): Promise<boolean> {
+  const { data: config } = await supabase
+    .from('business_config')
+    .select('owner_notification_phone, vapi_owner_assistant_id')
+    .eq('tenant_id', tenantId)
+    .single()
+
+  if (!config) return false
+
+  // Match by owner assistant ID (strongest signal)
+  if (assistantId && config.vapi_owner_assistant_id && assistantId === config.vapi_owner_assistant_id) {
+    return true
+  }
+
+  // Match by caller phone number
+  if (callerPhone && config.owner_notification_phone) {
+    const normalizePhone = (p: string) => p.replace(/[\s\-\(\)]/g, '')
+    if (normalizePhone(callerPhone) === normalizePhone(config.owner_notification_phone)) {
+      return true
+    }
+  }
+
+  return false
+}
 
 export async function POST(request: NextRequest) {
   try {
@@ -27,6 +64,16 @@ export async function POST(request: NextRequest) {
     if (messageType === 'transcript' || messageType === 'conversation-update') {
       // These are informational, no response needed
       return NextResponse.json({})
+    }
+
+    // Handle squad transfer-destination-request (agent wants to hand off)
+    if (messageType === 'transfer-destination-request') {
+      return await handleTransferDestination(body)
+    }
+
+    // Handle assistant-request (Vapi asks which assistant to use for the call)
+    if (messageType === 'assistant-request') {
+      return await handleAssistantRequest(body)
     }
 
     // Handle tool calls from Vapi
@@ -65,6 +112,12 @@ async function handleVoiceInput(body: VapiServerMessage): Promise<NextResponse> 
     })
   }
 
+  // Detect owner vs customer call
+  const callerPhone = body.message?.call?.customer?.number
+  const assistantId = body.message?.call?.assistantId
+  const ownerCall = await isOwnerCall(supabase, tenantId, callerPhone, assistantId)
+  const mode = ownerCall ? 'owner' : 'customer'
+
   // Get transcript/content
   const content = body.message?.functionCall?.parameters?.userMessage as string
     || body.message?.transcript
@@ -83,7 +136,7 @@ async function handleVoiceInput(body: VapiServerMessage): Promise<NextResponse> 
     tenant_id: tenantId,
     role: 'user',
     content,
-    metadata: { channel: 'voice', callId: body.message?.call?.id },
+    metadata: { channel: 'voice', callId: body.message?.call?.id, mode },
   })
 
   // Build context and get conversation history
@@ -102,10 +155,11 @@ async function handleVoiceInput(body: VapiServerMessage): Promise<NextResponse> 
   })) as ModelMessage[]
 
   // Run agent (sync mode - voice needs immediate response)
+  // Owner mode gets full tool access (schedule, clients, invoices, etc.)
   const response = await runAgentSync(messages, {
     tenantId,
     conversationId: normalized.conversationId,
-    mode: 'customer',
+    mode,
     context,
     supabase,
   })
@@ -116,7 +170,7 @@ async function handleVoiceInput(body: VapiServerMessage): Promise<NextResponse> 
     tenant_id: tenantId,
     role: 'assistant',
     content: response,
-    metadata: { channel: 'voice', callId: body.message?.call?.id },
+    metadata: { channel: 'voice', callId: body.message?.call?.id, mode },
   })
 
   const vapiResponse: VapiServerResponse = {
@@ -140,6 +194,130 @@ async function handleToolCalls(body: VapiServerMessage): Promise<NextResponse> {
   }))
 
   return NextResponse.json({ messageResponse: { toolResults: results } })
+}
+
+/**
+ * Handle transfer-destination-request: a squad member wants to hand off to another agent.
+ * Vapi sends the destination assistant name; we return its config.
+ */
+async function handleTransferDestination(body: VapiServerMessage): Promise<NextResponse> {
+  const supabase = createAdminClient()
+
+  const tenantId = await resolveTenantFromChannel('voice', body.message)
+  if (!tenantId) {
+    return NextResponse.json({
+      error: 'Could not resolve tenant for transfer',
+    })
+  }
+
+  // The destination is in the message payload
+  const destination = body.message?.destination
+  const destinationName: string =
+    destination?.assistantName ||
+    destination?.assistant?.name ||
+    destination?.description ||
+    ''
+
+  if (!destinationName) {
+    console.error('Transfer destination request missing assistant name:', JSON.stringify(body.message))
+    return NextResponse.json({})
+  }
+
+  // Get business config to build squad with proper context
+  const { data: config } = await supabase
+    .from('business_config')
+    .select('business_name, business_type')
+    .eq('tenant_id', tenantId)
+    .single()
+
+  const { data: services } = await supabase
+    .from('services')
+    .select('name')
+    .eq('tenant_id', tenantId)
+    .eq('active', true)
+
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
+  const serverUrl = `${appUrl}/api/voice/respond`
+
+  const squad = createBusinessSquad({
+    businessName: config?.business_name || 'Our Business',
+    businessType: config?.business_type || 'service business',
+    services: (services || []).map((s: any) => s.name),
+    serverUrl,
+  })
+
+  const memberAssistant = findSquadMember(squad, destinationName)
+
+  if (!memberAssistant) {
+    console.error(`Squad member not found: "${destinationName}"`)
+    return NextResponse.json({})
+  }
+
+  return NextResponse.json({
+    destination: {
+      type: 'assistant',
+      assistant: memberAssistant,
+      transferMode: 'rolling-history',
+    },
+  })
+}
+
+/**
+ * Handle assistant-request: Vapi asks which assistant to use for this call.
+ * Returns the Greeter (first squad member) so the call starts there.
+ */
+async function handleAssistantRequest(body: VapiServerMessage): Promise<NextResponse> {
+  const supabase = createAdminClient()
+
+  const tenantId = await resolveTenantFromChannel('voice', body.message)
+  if (!tenantId) {
+    // Return a default fallback assistant config
+    return NextResponse.json({
+      assistant: {
+        name: 'Default Assistant',
+        firstMessage: 'Hello! How can I help you today?',
+        model: {
+          provider: 'openai',
+          model: 'gpt-4o-mini',
+          messages: [
+            { role: 'system', content: 'You are a helpful business assistant.' },
+          ],
+        },
+        voice: { provider: '11labs', voiceId: 'bIHbv24MWmeRgasZH58o' },
+      },
+    })
+  }
+
+  // Build the Greeter assistant for this tenant
+  const { data: config } = await supabase
+    .from('business_config')
+    .select('business_name, business_type')
+    .eq('tenant_id', tenantId)
+    .single()
+
+  const { data: services } = await supabase
+    .from('services')
+    .select('name')
+    .eq('tenant_id', tenantId)
+    .eq('active', true)
+
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
+  const serverUrl = `${appUrl}/api/voice/respond`
+
+  const squad = createBusinessSquad({
+    businessName: config?.business_name || 'Our Business',
+    businessType: config?.business_type || 'service business',
+    services: (services || []).map((s: any) => s.name),
+    serverUrl,
+  })
+
+  // Return the first member (Greeter) as the entry point
+  const greeter = squad.members[0]
+
+  return NextResponse.json({
+    assistant: greeter.assistant,
+    squadId: undefined, // Let Vapi use the assigned squad if available
+  })
 }
 
 async function handleEndOfCall(body: VapiServerMessage) {

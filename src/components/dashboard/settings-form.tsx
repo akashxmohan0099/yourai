@@ -35,6 +35,9 @@ export function SettingsForm({ tenantId, tenantSlug, config, services }: Setting
   const [vapiAssistantId, setVapiAssistantId] = useState(
     config?.vapi_assistant_id || '5fabbe4d-3e1d-48a4-8a98-83fd49b3c5f5'
   )
+  const [vapiOwnerAssistantId, setVapiOwnerAssistantId] = useState(
+    config?.vapi_owner_assistant_id || ''
+  )
   const [vapiPhoneNumberId, setVapiPhoneNumberId] = useState(config?.vapi_phone_number_id || '')
   const [vapiVoiceEnabled, setVapiVoiceEnabled] = useState(config?.voice_enabled || false)
   const [vapiSaving, setVapiSaving] = useState(false)
@@ -108,6 +111,7 @@ export function SettingsForm({ tenantId, tenantSlug, config, services }: Setting
       .then((res) => res.json())
       .then((data) => {
         if (data.vapi_assistant_id) setVapiAssistantId(data.vapi_assistant_id)
+        if (data.vapi_owner_assistant_id) setVapiOwnerAssistantId(data.vapi_owner_assistant_id)
         if (data.vapi_phone_number_id) setVapiPhoneNumberId(data.vapi_phone_number_id)
         if (data.voice_enabled !== undefined) setVapiVoiceEnabled(data.voice_enabled)
         if (data.assistant) setVapiAssistantInfo(data.assistant)
@@ -125,6 +129,7 @@ export function SettingsForm({ tenantId, tenantSlug, config, services }: Setting
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           assistantId: vapiAssistantId || null,
+          ownerAssistantId: vapiOwnerAssistantId || null,
           phoneNumberId: vapiPhoneNumberId || null,
           voiceEnabled: vapiVoiceEnabled,
         }),
@@ -454,16 +459,48 @@ export function SettingsForm({ tenantId, tenantSlug, config, services }: Setting
           <span className="text-sm text-stone-700 font-medium">Enable voice calls</span>
         </div>
 
+        {/* Web voice widget info */}
+        {vapiVoiceEnabled && vapiAssistantId && (
+          <div className="bg-violet-50 border border-violet-200 rounded-xl px-4 py-3">
+            <div className="flex items-start gap-2">
+              <svg className="w-4 h-4 text-violet-600 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <div>
+                <p className="text-sm font-medium text-violet-900">Web Voice Widget</p>
+                <p className="text-xs text-violet-700 mt-0.5">
+                  When enabled, a voice call button will appear on your public chat page alongside
+                  the text chat. Customers can call your AI assistant directly from the browser --
+                  no phone number needed.
+                </p>
+                <code className="inline-block mt-1.5 text-xs text-violet-600 bg-violet-100 px-2 py-1 rounded-lg font-mono">
+                  {typeof window !== 'undefined' ? window.location.origin : ''}/chat/{tenantSlug}
+                </code>
+              </div>
+            </div>
+          </div>
+        )}
+
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
           <div>
-            <label className={labelClass}>Vapi Assistant ID</label>
+            <label className={labelClass}>Vapi Assistant ID (Customer)</label>
             <input
               value={vapiAssistantId}
               onChange={(e) => setVapiAssistantId(e.target.value)}
               placeholder="Vapi Assistant ID"
               className={`${inputClass} font-mono`}
             />
-            <p className="mt-1.5 text-xs text-stone-400">Found in your Vapi dashboard under Assistants</p>
+            <p className="mt-1.5 text-xs text-stone-400">Handles incoming customer calls</p>
+          </div>
+          <div>
+            <label className={labelClass}>Owner Assistant ID</label>
+            <input
+              value={vapiOwnerAssistantId}
+              onChange={(e) => setVapiOwnerAssistantId(e.target.value)}
+              placeholder="Vapi Owner Assistant ID"
+              className={`${inputClass} font-mono`}
+            />
+            <p className="mt-1.5 text-xs text-stone-400">Handles owner/manager calls with full tool access</p>
           </div>
           <div>
             <label className={labelClass}>Phone Number ID</label>

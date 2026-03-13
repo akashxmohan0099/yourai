@@ -109,6 +109,42 @@ export class VapiClient {
     if (!res.ok) throw new Error(`Vapi API error: ${res.status}`)
     return res.json()
   }
+
+  // ── Squads ──────────────────────────────────────────────────────
+
+  async createSquad(squad: Record<string, unknown>): Promise<any> {
+    const res = await fetch(`${VAPI_API_BASE}/squad`, {
+      method: 'POST',
+      headers: this.headers,
+      body: JSON.stringify(squad),
+    })
+    if (!res.ok) throw new Error(`Vapi API error: ${res.status}`)
+    return res.json()
+  }
+
+  async listSquads(): Promise<any[]> {
+    const res = await fetch(`${VAPI_API_BASE}/squad`, {
+      headers: this.headers,
+    })
+    if (!res.ok) throw new Error(`Vapi API error: ${res.status}`)
+    return res.json()
+  }
+
+  async getSquad(id: string): Promise<any> {
+    const res = await fetch(`${VAPI_API_BASE}/squad/${id}`, {
+      headers: this.headers,
+    })
+    if (!res.ok) throw new Error(`Vapi API error: ${res.status}`)
+    return res.json()
+  }
+
+  async deleteSquad(id: string): Promise<void> {
+    const res = await fetch(`${VAPI_API_BASE}/squad/${id}`, {
+      method: 'DELETE',
+      headers: this.headers,
+    })
+    if (!res.ok) throw new Error(`Vapi API error: ${res.status}`)
+  }
 }
 
 export function getVapiClient() {

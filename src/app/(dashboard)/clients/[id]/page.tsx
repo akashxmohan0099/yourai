@@ -5,6 +5,7 @@ import { formatDateTime, formatRelativeTime } from '@/lib/utils'
 import { ArrowLeft, Phone, Mail, MessageSquare } from 'lucide-react'
 import Link from 'next/link'
 import { ClientDetailEnhanced } from '@/components/dashboard/client-detail-enhanced'
+import { CallClientButton } from '@/components/dashboard/call-client-button'
 
 interface Props {
   params: Promise<{ id: string }>
@@ -15,7 +16,7 @@ export default async function ClientDetailPage({ params }: Props) {
   const { tenantId } = await requireTenant()
   const supabase = await createClient()
 
-  const [clientResult, conversationsResult, notesResult, tagsResult, appointmentsResult] = await Promise.all([
+  const [clientResult, conversationsResult, notesResult, tagsResult, appointmentsResult, configResult] = await Promise.all([
     supabase
       .from('clients')
       .select('*, channel_identities(channel, identifier, created_at)')
@@ -47,6 +48,11 @@ export default async function ClientDetailPage({ params }: Props) {
       .eq('tenant_id', tenantId)
       .order('starts_at', { ascending: false })
       .limit(10),
+    supabase
+      .from('business_config')
+      .select('voice_enabled')
+      .eq('tenant_id', tenantId)
+      .single(),
   ])
 
   const client = clientResult.data
@@ -56,6 +62,7 @@ export default async function ClientDetailPage({ params }: Props) {
   const notes = notesResult.data || []
   const tags = tagsResult.data || []
   const appointments = appointmentsResult.data || []
+  const voiceEnabled = configResult.data?.voice_enabled || false
 
   return (
     <div className="min-h-screen bg-stone-50">
@@ -71,7 +78,15 @@ export default async function ClientDetailPage({ params }: Props) {
               </span>
             </div>
             <div>
-              <h1 className="text-2xl font-semibold text-stone-900">{client.name || 'Anonymous'}</h1>
+              <div className="flex items-center gap-3">
+                <h1 className="text-2xl font-semibold text-stone-900">{client.name || 'Anonymous'}</h1>
+                <CallClientButton
+                  clientId={client.id}
+                  clientName={client.name || 'Anonymous'}
+                  clientPhone={client.phone || ''}
+                  voiceEnabled={voiceEnabled}
+                />
+              </div>
               <p className="text-sm text-stone-500">
                 First seen {formatRelativeTime(client.first_seen_at)} — Last seen {formatRelativeTime(client.last_seen_at)}
               </p>

@@ -1,6 +1,6 @@
 export interface VapiServerMessage {
   message: {
-    type: 'conversation-update' | 'end-of-call-report' | 'function-call' | 'hang' | 'speech-update' | 'status-update' | 'transcript' | 'tool-calls' | 'transfer-destination-request' | 'voice-input'
+    type: 'assistant-request' | 'conversation-update' | 'end-of-call-report' | 'function-call' | 'hang' | 'speech-update' | 'status-update' | 'transcript' | 'tool-calls' | 'transfer-destination-request' | 'voice-input'
     call?: VapiCall
     transcript?: string
     functionCall?: {
@@ -22,6 +22,14 @@ export interface VapiServerMessage {
       role: string
       message: string
     }>
+    /** Present on transfer-destination-request messages */
+    destination?: {
+      type?: string
+      assistantName?: string
+      assistant?: { name?: string }
+      description?: string
+      message?: string
+    }
   }
 }
 
@@ -30,6 +38,7 @@ export interface VapiCall {
   orgId: string
   type: string
   status: string
+  assistantId?: string
   phoneNumberId?: string
   customer?: {
     number?: string

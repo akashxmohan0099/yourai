@@ -29,12 +29,13 @@ export async function GET() {
     // Get current Vapi config from business_config
     const { data: config } = await supabase
       .from('business_config')
-      .select('vapi_assistant_id, vapi_phone_number_id, voice_enabled')
+      .select('vapi_assistant_id, vapi_owner_assistant_id, vapi_phone_number_id, voice_enabled')
       .eq('tenant_id', tenantId)
       .single()
 
     const result: Record<string, unknown> = {
       vapi_assistant_id: config?.vapi_assistant_id || null,
+      vapi_owner_assistant_id: config?.vapi_owner_assistant_id || null,
       vapi_phone_number_id: config?.vapi_phone_number_id || null,
       voice_enabled: config?.voice_enabled || false,
       assistant: null,
