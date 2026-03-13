@@ -76,16 +76,16 @@ export function ClientDetailEnhanced({
   return (
     <div className="space-y-6">
       {/* Tags */}
-      <div className="bg-white rounded-2xl border border-stone-200 shadow-sm p-6">
+      <div className="bg-white rounded-2xl border border-[#d2d2d7] shadow-sm p-6">
         <div className="flex items-center gap-2 mb-4">
-          <Tag className="w-4 h-4 text-stone-500" />
-          <h3 className="text-sm font-semibold text-stone-900">Tags</h3>
+          <Tag className="w-4 h-4 text-[#86868b]" />
+          <h3 className="text-sm font-semibold text-[#1d1d1f]">Tags</h3>
         </div>
         <div className="flex flex-wrap gap-2 mb-4">
           {tags.map((t: any) => (
             <span
               key={t.id}
-              className="inline-flex items-center gap-1.5 rounded-full px-3 py-1 bg-violet-50 text-violet-700 text-sm font-medium"
+              className="inline-flex items-center gap-1.5 rounded-full px-3 py-1 bg-[#f5f5f7] text-[#424245] text-sm font-medium"
             >
               {t.tag}
               <button
@@ -97,7 +97,7 @@ export function ClientDetailEnhanced({
             </span>
           ))}
           {tags.length === 0 && (
-            <span className="text-sm text-stone-400">No tags yet</span>
+            <span className="text-sm text-[#86868b]">No tags yet</span>
           )}
         </div>
         <div className="flex gap-2">
@@ -107,12 +107,12 @@ export function ClientDetailEnhanced({
             onChange={(e) => setNewTag(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && addTag()}
             placeholder="Add tag..."
-            className="flex-1 px-3 py-2 text-sm border border-stone-300 rounded-xl focus:ring-2 focus:ring-violet-500 focus:border-transparent text-stone-900 placeholder:text-stone-400"
+            className="flex-1 px-3 py-2 text-sm border border-[#d2d2d7] rounded-xl focus:ring-2 focus:ring-[#0066CC] focus:border-transparent text-[#1d1d1f] placeholder:text-[#86868b]"
           />
           <button
             onClick={addTag}
             disabled={saving}
-            className="bg-violet-600 hover:bg-violet-700 text-white rounded-xl py-2 px-3 disabled:opacity-50 transition-colors"
+            className="bg-[#1d1d1f] hover:bg-black text-white rounded-xl py-2 px-3 disabled:opacity-50 transition-colors"
           >
             <Plus className="w-4 h-4" />
           </button>
@@ -120,22 +120,22 @@ export function ClientDetailEnhanced({
       </div>
 
       {/* Notes */}
-      <div className="bg-white rounded-2xl border border-stone-200 shadow-sm p-6">
+      <div className="bg-white rounded-2xl border border-[#d2d2d7] shadow-sm p-6">
         <div className="flex items-center gap-2 mb-4">
-          <StickyNote className="w-4 h-4 text-stone-500" />
-          <h3 className="text-sm font-semibold text-stone-900">Notes</h3>
+          <StickyNote className="w-4 h-4 text-[#86868b]" />
+          <h3 className="text-sm font-semibold text-[#1d1d1f]">Notes</h3>
         </div>
         <div className="space-y-3 mb-4">
           {notes.length === 0 ? (
-            <p className="text-sm text-stone-400">No notes yet</p>
+            <p className="text-sm text-[#86868b]">No notes yet</p>
           ) : (
             notes.map((n: any) => (
               <div
                 key={n.id}
-                className="bg-stone-50 rounded-xl px-4 py-3 text-sm"
+                className="bg-[#f5f5f7] rounded-xl px-4 py-3 text-sm"
               >
-                <p className="text-stone-700 leading-relaxed">{n.note}</p>
-                <p className="text-xs text-stone-400 mt-1.5">
+                <p className="text-[#424245] leading-relaxed">{n.note}</p>
+                <p className="text-xs text-[#86868b] mt-1.5">
                   {n.source === 'ai' ? 'Added by AI' : 'Manual'} ·{' '}
                   {new Date(n.created_at).toLocaleDateString()}
                 </p>
@@ -149,12 +149,12 @@ export function ClientDetailEnhanced({
             onChange={(e) => setNewNote(e.target.value)}
             placeholder="Add a note..."
             rows={2}
-            className="flex-1 px-3 py-2 text-sm border border-stone-300 rounded-xl resize-none focus:ring-2 focus:ring-violet-500 focus:border-transparent text-stone-900 placeholder:text-stone-400"
+            className="flex-1 px-3 py-2 text-sm border border-[#d2d2d7] rounded-xl resize-none focus:ring-2 focus:ring-[#0066CC] focus:border-transparent text-[#1d1d1f] placeholder:text-[#86868b]"
           />
           <button
             onClick={addNote}
             disabled={saving || !newNote.trim()}
-            className="bg-violet-600 hover:bg-violet-700 text-white rounded-xl py-2.5 px-5 text-sm font-medium disabled:opacity-50 self-end transition-colors"
+            className="bg-[#1d1d1f] hover:bg-black text-white rounded-xl py-2.5 px-5 text-sm font-medium disabled:opacity-50 self-end transition-colors"
           >
             Add
           </button>
@@ -162,35 +162,35 @@ export function ClientDetailEnhanced({
       </div>
 
       {/* Appointments */}
-      <div className="bg-white rounded-2xl border border-stone-200 shadow-sm p-6">
+      <div className="bg-white rounded-2xl border border-[#d2d2d7] shadow-sm p-6">
         <div className="flex items-center gap-2 mb-4">
-          <Calendar className="w-4 h-4 text-stone-500" />
-          <h3 className="text-sm font-semibold text-stone-900">Appointments</h3>
+          <Calendar className="w-4 h-4 text-[#86868b]" />
+          <h3 className="text-sm font-semibold text-[#1d1d1f]">Appointments</h3>
         </div>
         {appointments.length === 0 ? (
-          <p className="text-sm text-stone-400">No appointments</p>
+          <p className="text-sm text-[#86868b]">No appointments</p>
         ) : (
           <div className="space-y-2.5">
             {appointments.map((apt: any) => (
               <div
                 key={apt.id}
-                className="flex items-center gap-3 bg-stone-50 rounded-xl px-4 py-3"
+                className="flex items-center gap-3 bg-[#f5f5f7] rounded-xl px-4 py-3"
               >
                 <div className="min-w-[80px]">
-                  <p className="text-xs font-semibold text-stone-900">
+                  <p className="text-xs font-semibold text-[#1d1d1f]">
                     {new Date(apt.starts_at).toLocaleDateString()}
                   </p>
-                  <p className="text-xs text-stone-500 mt-0.5">
+                  <p className="text-xs text-[#86868b] mt-0.5">
                     {new Date(apt.starts_at).toLocaleTimeString([], {
                       hour: '2-digit',
                       minute: '2-digit',
                     })}
                   </p>
                 </div>
-                <div className="w-px h-8 bg-stone-200" />
+                <div className="w-px h-8 bg-[#d2d2d7]" />
                 <div className="flex-1">
-                  <p className="text-sm font-medium text-stone-700">{apt.title}</p>
-                  <p className="text-xs text-stone-400 mt-0.5">{apt.services?.name}</p>
+                  <p className="text-sm font-medium text-[#424245]">{apt.title}</p>
+                  <p className="text-xs text-[#86868b] mt-0.5">{apt.services?.name}</p>
                 </div>
                 <span
                   className={`rounded-full px-3 py-1 text-xs font-medium ${
@@ -199,8 +199,8 @@ export function ClientDetailEnhanced({
                       : apt.status === 'cancelled'
                       ? 'bg-red-50 text-red-700'
                       : apt.status === 'completed'
-                      ? 'bg-violet-50 text-violet-700'
-                      : 'bg-stone-100 text-stone-600'
+                      ? 'bg-[#f5f5f7] text-[#424245]'
+                      : 'bg-[#f5f5f7] text-[#424245]'
                   }`}
                 >
                   {apt.status}

@@ -157,21 +157,21 @@ export function TellAiStep({ tenantId, template, onNext, onBack }: TellAiStepPro
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-lg font-semibold text-zinc-900">Teach AI about your business</h2>
-        <p className="text-sm text-zinc-500 mt-1">Chat naturally. The AI extracts services, prices, hours, and more as you go.</p>
+        <h2 className="text-lg font-semibold text-[#1d1d1f]">Teach AI about your business</h2>
+        <p className="text-sm text-[#86868b] mt-1">Chat naturally. The AI extracts services, prices, hours, and more as you go.</p>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-4">
         {/* Chat area */}
-        <div className="lg:col-span-3 flex flex-col border border-zinc-200 rounded-lg overflow-hidden" style={{ height: '440px' }}>
+        <div className="lg:col-span-3 flex flex-col border border-[#d2d2d7] rounded-2xl overflow-hidden" style={{ height: '440px' }}>
           {/* Messages */}
-          <div className="flex-1 overflow-y-auto p-4 space-y-3 bg-zinc-50/50">
+          <div className="flex-1 overflow-y-auto p-4 space-y-3 bg-[#f5f5f7]/50">
             {messages.map((msg, i) => (
               <div key={i} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
                 <div className={`max-w-[85%] px-4 py-2.5 text-sm whitespace-pre-wrap leading-relaxed ${
                   msg.role === 'user'
-                    ? 'bg-indigo-600 text-white rounded-lg rounded-br-sm'
-                    : 'bg-white border border-zinc-200 text-zinc-700 rounded-lg rounded-bl-sm'
+                    ? 'bg-[#1d1d1f] text-white rounded-2xl rounded-br-sm'
+                    : 'bg-white border border-[#d2d2d7] text-[#1d1d1f] rounded-2xl rounded-bl-sm'
                 }`}>
                   {msg.content}
                 </div>
@@ -179,8 +179,8 @@ export function TellAiStep({ tenantId, template, onNext, onBack }: TellAiStepPro
             ))}
             {sending && (
               <div className="flex justify-start">
-                <div className="bg-white border border-zinc-200 px-4 py-2.5 rounded-lg rounded-bl-sm">
-                  <Loader2 className="w-4 h-4 animate-spin text-zinc-400" />
+                <div className="bg-white border border-[#d2d2d7] px-4 py-2.5 rounded-2xl rounded-bl-sm">
+                  <Loader2 className="w-4 h-4 animate-spin text-[#86868b]" />
                 </div>
               </div>
             )}
@@ -188,20 +188,20 @@ export function TellAiStep({ tenantId, template, onNext, onBack }: TellAiStepPro
           </div>
 
           {/* Input */}
-          <div className="border-t border-zinc-200 p-3 bg-white">
+          <div className="border-t border-[#d2d2d7] p-3 bg-white">
             <div className="flex gap-2">
               <input
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && sendMessage()}
                 placeholder="Tell me about your business..."
-                className="flex-1 px-3 py-2 border border-zinc-300 rounded-lg text-sm text-zinc-900 placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                className="flex-1 px-3 py-2 border border-[#d2d2d7] rounded-xl text-sm text-[#1d1d1f] placeholder-[#86868b] focus:outline-none focus:ring-2 focus:ring-[#0066CC] focus:border-transparent"
                 disabled={sending}
               />
               <button
                 onClick={sendMessage}
                 disabled={sending || !input.trim()}
-                className="px-3 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:opacity-40 transition-colors"
+                className="px-3 py-2 bg-[#1d1d1f] text-white rounded-xl hover:bg-black disabled:opacity-40 transition-colors"
               >
                 <Send className="w-4 h-4" />
               </button>
@@ -210,71 +210,71 @@ export function TellAiStep({ tenantId, template, onNext, onBack }: TellAiStepPro
         </div>
 
         {/* Extracted data panel */}
-        <div className="lg:col-span-2 border border-zinc-200 rounded-lg overflow-hidden" style={{ maxHeight: '440px' }}>
-          <div className="px-4 py-3 border-b border-zinc-200 bg-zinc-50">
-            <h3 className="text-sm font-semibold text-zinc-900">Extracted data</h3>
-            <p className="text-xs text-zinc-500 mt-0.5">Updated as you chat</p>
+        <div className="lg:col-span-2 border border-[#d2d2d7] rounded-2xl overflow-hidden" style={{ maxHeight: '440px' }}>
+          <div className="px-4 py-3 border-b border-[#d2d2d7] bg-[#f5f5f7]">
+            <h3 className="text-sm font-semibold text-[#1d1d1f]">Extracted data</h3>
+            <p className="text-xs text-[#86868b] mt-0.5">Updated as you chat</p>
           </div>
 
           <div className="p-4 space-y-5 overflow-y-auto" style={{ maxHeight: '370px' }}>
             {/* Services */}
             <div>
               <div className="flex items-center gap-2 mb-2">
-                <Briefcase className="w-3.5 h-3.5 text-zinc-400" />
-                <h4 className="text-xs font-semibold text-zinc-500 uppercase tracking-wide">Services ({serviceCount})</h4>
+                <Briefcase className="w-3.5 h-3.5 text-[#86868b]" />
+                <h4 className="text-xs font-semibold text-[#86868b] uppercase tracking-wide">Services ({serviceCount})</h4>
               </div>
               {serviceCount > 0 ? (
                 <div className="space-y-1.5">
                   {extracted.services.slice(0, 8).map((s, i) => (
                     <div key={i} className="flex justify-between text-sm">
-                      <span className="text-zinc-700 truncate">{s.name}</span>
-                      <span className="text-zinc-400 ml-2 flex-shrink-0 tabular-nums">{s.price}</span>
+                      <span className="text-[#1d1d1f] truncate">{s.name}</span>
+                      <span className="text-[#86868b] ml-2 flex-shrink-0 tabular-nums">{s.price}</span>
                     </div>
                   ))}
                   {serviceCount > 8 && (
-                    <p className="text-xs text-zinc-400">+{serviceCount - 8} more</p>
+                    <p className="text-xs text-[#86868b]">+{serviceCount - 8} more</p>
                   )}
                 </div>
               ) : (
-                <p className="text-xs text-zinc-400 italic">No services yet</p>
+                <p className="text-xs text-[#86868b] italic">No services yet</p>
               )}
             </div>
 
             {/* Hours */}
             <div>
               <div className="flex items-center gap-2 mb-2">
-                <Clock className="w-3.5 h-3.5 text-zinc-400" />
-                <h4 className="text-xs font-semibold text-zinc-500 uppercase tracking-wide">Hours</h4>
+                <Clock className="w-3.5 h-3.5 text-[#86868b]" />
+                <h4 className="text-xs font-semibold text-[#86868b] uppercase tracking-wide">Hours</h4>
               </div>
               {hoursCount > 0 ? (
                 <div className="space-y-1">
                   {Object.entries(extracted.hours).slice(0, 7).map(([day, h]) => (
                     <div key={day} className="flex justify-between text-sm">
-                      <span className="text-zinc-700 capitalize">{day.slice(0, 3)}</span>
-                      <span className="text-zinc-400 tabular-nums">{h ? `${h.open} - ${h.close}` : 'Closed'}</span>
+                      <span className="text-[#1d1d1f] capitalize">{day.slice(0, 3)}</span>
+                      <span className="text-[#86868b] tabular-nums">{h ? `${h.open} - ${h.close}` : 'Closed'}</span>
                     </div>
                   ))}
                 </div>
               ) : (
-                <p className="text-xs text-zinc-400 italic">No hours set</p>
+                <p className="text-xs text-[#86868b] italic">No hours set</p>
               )}
             </div>
 
             {/* FAQs */}
             <div>
               <div className="flex items-center gap-2 mb-2">
-                <HelpCircle className="w-3.5 h-3.5 text-zinc-400" />
-                <h4 className="text-xs font-semibold text-zinc-500 uppercase tracking-wide">FAQs ({faqCount})</h4>
+                <HelpCircle className="w-3.5 h-3.5 text-[#86868b]" />
+                <h4 className="text-xs font-semibold text-[#86868b] uppercase tracking-wide">FAQs ({faqCount})</h4>
               </div>
               {faqCount > 0 ? (
                 <div className="space-y-1">
                   {extracted.faqs.slice(0, 4).map((f, i) => (
-                    <p key={i} className="text-sm text-zinc-600 truncate">{f.question}</p>
+                    <p key={i} className="text-sm text-[#86868b] truncate">{f.question}</p>
                   ))}
-                  {faqCount > 4 && <p className="text-xs text-zinc-400">+{faqCount - 4} more</p>}
+                  {faqCount > 4 && <p className="text-xs text-[#86868b]">+{faqCount - 4} more</p>}
                 </div>
               ) : (
-                <p className="text-xs text-zinc-400 italic">No FAQs yet</p>
+                <p className="text-xs text-[#86868b] italic">No FAQs yet</p>
               )}
             </div>
 
@@ -282,18 +282,18 @@ export function TellAiStep({ tenantId, template, onNext, onBack }: TellAiStepPro
             {extracted.tone && (
               <div>
                 <div className="flex items-center gap-2 mb-2">
-                  <MessageCircle className="w-3.5 h-3.5 text-zinc-400" />
-                  <h4 className="text-xs font-semibold text-zinc-500 uppercase tracking-wide">Tone</h4>
+                  <MessageCircle className="w-3.5 h-3.5 text-[#86868b]" />
+                  <h4 className="text-xs font-semibold text-[#86868b] uppercase tracking-wide">Tone</h4>
                 </div>
-                <span className="text-sm text-zinc-700 capitalize">{extracted.tone}</span>
+                <span className="text-sm text-[#1d1d1f] capitalize">{extracted.tone}</span>
               </div>
             )}
 
             {/* Special rules */}
             {extracted.customInstructions && (
               <div>
-                <h4 className="text-xs font-semibold text-zinc-500 uppercase tracking-wide mb-1">Special rules</h4>
-                <p className="text-sm text-zinc-600 leading-relaxed">
+                <h4 className="text-xs font-semibold text-[#86868b] uppercase tracking-wide mb-1">Special rules</h4>
+                <p className="text-sm text-[#86868b] leading-relaxed">
                   {extracted.customInstructions.slice(0, 120)}{extracted.customInstructions.length > 120 ? '...' : ''}
                 </p>
               </div>
@@ -302,18 +302,18 @@ export function TellAiStep({ tenantId, template, onNext, onBack }: TellAiStepPro
         </div>
       </div>
 
-      <div className="flex justify-between pt-2 border-t border-zinc-100">
+      <div className="flex justify-between pt-2 border-t border-[#f5f5f7]">
         <button
           type="button"
           onClick={onBack}
-          className="px-5 py-2 text-sm font-medium text-zinc-700 hover:text-zinc-900 hover:bg-zinc-50 rounded-lg transition-colors"
+          className="px-5 py-2 text-sm font-medium text-[#1d1d1f] hover:text-black hover:bg-[#f5f5f7] rounded-xl transition-colors"
         >
           Back
         </button>
         <button
           onClick={handleSaveAndContinue}
           disabled={saving}
-          className="px-6 py-2 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700 disabled:opacity-50 transition-colors inline-flex items-center gap-2"
+          className="px-6 py-2 bg-[#1d1d1f] text-white text-sm font-medium rounded-xl hover:bg-black disabled:opacity-50 transition-colors inline-flex items-center gap-2"
         >
           {saving ? 'Saving...' : 'Review'}
           {!saving && <ArrowRight className="w-4 h-4" />}

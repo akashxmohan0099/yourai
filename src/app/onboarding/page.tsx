@@ -96,7 +96,7 @@ export default function OnboardingPage() {
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-white">
-        <div className="animate-spin rounded-full h-6 w-6 border-2 border-zinc-200 border-t-indigo-600" />
+        <div className="animate-spin rounded-full h-6 w-6 border-2 border-[#d2d2d7] border-t-[#1d1d1f]" />
       </div>
     )
   }
@@ -104,20 +104,20 @@ export default function OnboardingPage() {
   return (
     <div className="min-h-screen bg-white">
       {/* Top bar */}
-      <div className="border-b border-zinc-200">
+      <div className="border-b border-[#d2d2d7]">
         <div className="max-w-3xl mx-auto px-6 py-4 flex items-center justify-between">
-          <span className="text-lg font-semibold text-zinc-900 tracking-tight">YourAI</span>
-          <span className="text-sm text-zinc-400">Step {currentStep} of {STEPS.length}</span>
+          <span className="text-lg font-semibold text-[#1d1d1f] tracking-tight">YourAI</span>
+          <span className="text-sm text-[#86868b]">Step {currentStep} of {STEPS.length}</span>
         </div>
       </div>
 
       <div className="max-w-3xl mx-auto px-6 py-10">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-2xl font-semibold text-zinc-900 tracking-tight">
+          <h1 className="text-2xl font-semibold text-[#1d1d1f] tracking-tight">
             Set up your business
           </h1>
-          <p className="text-zinc-500 mt-1">
+          <p className="text-[#86868b] mt-1">
             Configure your AI assistant in a few quick steps.
           </p>
         </div>
@@ -131,10 +131,10 @@ export default function OnboardingPage() {
                   className={cn(
                     'w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium transition-colors',
                     currentStep > step.id
-                      ? 'bg-indigo-600 text-white'
+                      ? 'bg-[#1d1d1f] text-white'
                       : currentStep === step.id
-                      ? 'bg-indigo-600 text-white'
-                      : 'bg-zinc-100 text-zinc-400 border border-zinc-200'
+                      ? 'bg-[#1d1d1f] text-white'
+                      : 'bg-[#f5f5f7] text-[#86868b] border border-[#d2d2d7]'
                   )}
                 >
                   {currentStep > step.id ? (
@@ -146,10 +146,10 @@ export default function OnboardingPage() {
                 <span className={cn(
                   'text-xs mt-2 font-medium hidden sm:block',
                   currentStep === step.id
-                    ? 'text-indigo-600'
+                    ? 'text-[#1d1d1f]'
                     : currentStep > step.id
-                    ? 'text-zinc-700'
-                    : 'text-zinc-400'
+                    ? 'text-[#1d1d1f]'
+                    : 'text-[#86868b]'
                 )}>
                   {step.name}
                 </span>
@@ -158,7 +158,7 @@ export default function OnboardingPage() {
                 <div
                   className={cn(
                     'flex-1 h-px mx-3 mt-4 sm:mt-4 transition-colors',
-                    currentStep > step.id ? 'bg-indigo-600' : 'bg-zinc-200'
+                    currentStep > step.id ? 'bg-[#1d1d1f]' : 'bg-[#d2d2d7]'
                   )}
                 />
               )}
@@ -167,7 +167,7 @@ export default function OnboardingPage() {
         </div>
 
         {/* Step content */}
-        <div className="bg-white border border-zinc-200 rounded-lg p-6 sm:p-8">
+        <div className="bg-white border border-[#d2d2d7] rounded-2xl p-6 sm:p-8">
           {currentStep === 1 && tenantId && (
             <BasicInfoStep
               tenantId={tenantId}
@@ -205,7 +205,7 @@ export default function OnboardingPage() {
           )}
         </div>
 
-        <p className="text-center text-sm text-zinc-400 mt-6">
+        <p className="text-center text-sm text-[#86868b] mt-6">
           You can change these later in Settings.
         </p>
       </div>

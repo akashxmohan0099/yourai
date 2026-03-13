@@ -15,8 +15,8 @@ export default async function ChannelsPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-semibold text-stone-900 mb-1">Channels</h1>
-        <p className="text-stone-500">Configure how customers can reach your AI assistant</p>
+        <h1 className="text-2xl font-semibold text-[#1d1d1f] mb-1">Channels</h1>
+        <p className="text-[#86868b]">Configure how customers can reach your AI assistant</p>
       </div>
       <ChannelConfig tenantId={tenantId} config={config || {}} />
     </div>

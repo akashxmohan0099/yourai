@@ -25,10 +25,10 @@ export function CallClientButton({
     <>
       <button
         onClick={() => setShowModal(true)}
-        className="p-2.5 hover:bg-violet-50 bg-white border border-stone-200 rounded-xl transition-colors group"
+        className="p-2.5 hover:bg-[#f5f5f7] bg-white border border-[#d2d2d7] rounded-xl transition-colors group"
         title="Call client"
       >
-        <Phone className="w-5 h-5 text-stone-400 group-hover:text-violet-600 transition-colors" />
+        <Phone className="w-5 h-5 text-[#86868b] group-hover:text-[#1d1d1f] transition-colors" />
       </button>
 
       <OutboundCallModal

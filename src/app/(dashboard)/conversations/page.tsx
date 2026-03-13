@@ -14,11 +14,11 @@ export default async function ConversationsPage() {
     .limit(50)
 
   return (
-    <div className="min-h-screen bg-stone-50">
+    <div className="min-h-screen bg-[#f5f5f7]">
       <div className="space-y-6 max-w-7xl mx-auto px-4 py-6">
         <div>
-          <h1 className="text-2xl font-semibold text-stone-900 mb-1">Conversations</h1>
-          <p className="text-stone-500 text-base">All your customer interactions in one place</p>
+          <h1 className="text-2xl font-semibold text-[#1d1d1f] mb-1">Conversations</h1>
+          <p className="text-[#86868b] text-base">All your customer interactions in one place</p>
         </div>
         <ConversationsList conversations={conversations || []} tenantId={tenantId} />
       </div>

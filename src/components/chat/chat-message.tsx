@@ -22,21 +22,21 @@ export function ChatMessage({ message }: ChatMessageProps) {
       <div
         className={cn(
           'w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0',
-          isUser ? 'bg-violet-600' : 'bg-stone-200'
+          isUser ? 'bg-[#1d1d1f]' : 'bg-[#d2d2d7]'
         )}
       >
         {isUser ? (
           <User className="w-4 h-4 text-white" />
         ) : (
-          <Bot className="w-4 h-4 text-stone-600" />
+          <Bot className="w-4 h-4 text-[#424245]" />
         )}
       </div>
       <div
         className={cn(
           'max-w-[80%] px-4 py-2.5 rounded-2xl text-sm leading-relaxed',
           isUser
-            ? 'bg-violet-600 text-white rounded-br-md'
-            : 'bg-white text-stone-900 border border-stone-200 rounded-bl-md shadow-sm'
+            ? 'bg-[#1d1d1f] text-white rounded-br-md'
+            : 'bg-[#f5f5f7] text-[#1d1d1f] border border-[#d2d2d7] rounded-bl-md shadow-sm'
         )}
       >
         <p className="whitespace-pre-wrap">{textContent}</p>

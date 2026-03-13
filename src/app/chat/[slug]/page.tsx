@@ -23,7 +23,7 @@ export default async function ChatPage({ params }: ChatPageProps) {
     .single()
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-violet-50 to-stone-50">
+    <div className="min-h-screen bg-gradient-to-br from-[#f5f5f7] to-white">
       <CommunicationHub
         tenantId={tenant.id}
         businessName={config?.business_name || tenant.name}

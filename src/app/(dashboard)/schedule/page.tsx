@@ -27,58 +27,58 @@ export default async function SchedulePage() {
   )
 
   return (
-    <div className="min-h-screen bg-stone-50">
+    <div className="min-h-screen bg-[#f5f5f7]">
       <div className="space-y-8 max-w-7xl mx-auto px-4 py-6">
         <div>
-          <h1 className="text-2xl font-semibold text-stone-900 mb-1">Schedule</h1>
-          <p className="text-stone-500 text-base">
+          <h1 className="text-2xl font-semibold text-[#1d1d1f] mb-1">Schedule</h1>
+          <p className="text-[#86868b] text-base">
             {todayAppointments.length} appointment{todayAppointments.length !== 1 ? 's' : ''} today
           </p>
         </div>
 
         {/* Today's appointments */}
-        <div className="bg-white rounded-2xl border border-stone-200 shadow-sm">
-          <div className="px-6 py-5 border-b border-stone-200 flex items-center gap-3">
-            <div className="p-2 bg-violet-50 rounded-xl">
-              <Clock className="w-5 h-5 text-violet-600" />
+        <div className="bg-white rounded-2xl border border-[#d2d2d7] shadow-sm">
+          <div className="px-6 py-5 border-b border-[#d2d2d7] flex items-center gap-3">
+            <div className="p-2 bg-[#f5f5f7] rounded-xl">
+              <Clock className="w-5 h-5 text-[#1d1d1f]" />
             </div>
             <div>
-              <h2 className="text-lg font-semibold text-stone-900">Today</h2>
-              <p className="text-sm text-stone-500">Your appointments for today</p>
+              <h2 className="text-lg font-semibold text-[#1d1d1f]">Today</h2>
+              <p className="text-sm text-[#86868b]">Your appointments for today</p>
             </div>
           </div>
-          <div className="divide-y divide-stone-100">
+          <div className="divide-y divide-[#f5f5f7]">
             {todayAppointments.length === 0 ? (
               <div className="px-6 py-12 text-center">
-                <div className="w-14 h-14 bg-stone-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                  <Calendar className="w-7 h-7 text-stone-400" />
+                <div className="w-14 h-14 bg-[#f5f5f7] rounded-2xl flex items-center justify-center mx-auto mb-4">
+                  <Calendar className="w-7 h-7 text-[#86868b]" />
                 </div>
-                <p className="text-stone-700 font-medium text-base">No appointments today</p>
-                <p className="text-stone-500 text-sm mt-1">Enjoy your free time!</p>
+                <p className="text-[#424245] font-medium text-base">No appointments today</p>
+                <p className="text-[#86868b] text-sm mt-1">Enjoy your free time!</p>
               </div>
             ) : (
               todayAppointments.map((apt: any) => (
                 <div key={apt.id} className="px-6 py-4 flex items-center gap-5">
                   <div className="text-center min-w-[70px]">
-                    <p className="text-sm font-semibold text-violet-600">
+                    <p className="text-sm font-semibold text-[#1d1d1f]">
                       {new Date(apt.starts_at).toLocaleTimeString([], {
                         hour: '2-digit',
                         minute: '2-digit',
                       })}
                     </p>
-                    <p className="text-xs text-stone-400 mt-0.5">
+                    <p className="text-xs text-[#86868b] mt-0.5">
                       {new Date(apt.ends_at).toLocaleTimeString([], {
                         hour: '2-digit',
                         minute: '2-digit',
                       })}
                     </p>
                   </div>
-                  <div className="w-px h-10 bg-stone-200" />
+                  <div className="w-px h-10 bg-[#d2d2d7]" />
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-semibold text-stone-900 truncate">
+                    <p className="text-sm font-semibold text-[#1d1d1f] truncate">
                       {apt.title}
                     </p>
-                    <p className="text-sm text-stone-500 mt-0.5">
+                    <p className="text-sm text-[#86868b] mt-0.5">
                       {apt.clients?.name || 'No client'}
                       {apt.services?.name ? ` \u00b7 ${apt.services.name}` : ''}
                     </p>
@@ -89,7 +89,7 @@ export default async function SchedulePage() {
                         ? 'bg-emerald-50 text-emerald-700'
                         : apt.status === 'pending'
                         ? 'bg-amber-50 text-amber-700'
-                        : 'bg-stone-100 text-stone-600'
+                        : 'bg-[#f5f5f7] text-[#424245]'
                     }`}
                   >
                     {apt.status}

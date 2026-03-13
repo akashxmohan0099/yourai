@@ -100,38 +100,38 @@ export function OutboundCallModal({
       />
 
       {/* Modal */}
-      <div className="relative bg-white rounded-2xl shadow-xl border border-stone-200 w-full max-w-md mx-4 overflow-hidden">
+      <div className="relative bg-white rounded-2xl shadow-xl border border-[#d2d2d7] w-full max-w-md mx-4 overflow-hidden">
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-stone-100">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-[#f5f5f7]">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-violet-100 rounded-full flex items-center justify-center">
-              <Phone className="w-5 h-5 text-violet-600" />
+            <div className="w-10 h-10 bg-[#f5f5f7] rounded-full flex items-center justify-center">
+              <Phone className="w-5 h-5 text-[#1d1d1f]" />
             </div>
             <div>
-              <h2 className="text-lg font-semibold text-stone-900">Call Client</h2>
-              <p className="text-sm text-stone-500">Outbound voice call</p>
+              <h2 className="text-lg font-semibold text-[#1d1d1f]">Call Client</h2>
+              <p className="text-sm text-[#86868b]">Outbound voice call</p>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="p-2 hover:bg-stone-100 rounded-xl transition-colors"
+            className="p-2 hover:bg-[#f5f5f7] rounded-xl transition-colors"
           >
-            <X className="w-5 h-5 text-stone-400" />
+            <X className="w-5 h-5 text-[#86868b]" />
           </button>
         </div>
 
         {/* Content */}
         <div className="px-6 py-5 space-y-5">
           {/* Client info */}
-          <div className="flex items-center gap-3 bg-stone-50 rounded-xl px-4 py-3">
-            <div className="w-10 h-10 bg-violet-100 rounded-full flex items-center justify-center">
-              <span className="text-violet-600 font-semibold">
+          <div className="flex items-center gap-3 bg-[#f5f5f7] rounded-xl px-4 py-3">
+            <div className="w-10 h-10 bg-[#d2d2d7] rounded-full flex items-center justify-center">
+              <span className="text-[#1d1d1f] font-semibold">
                 {(clientName || 'A').charAt(0).toUpperCase()}
               </span>
             </div>
             <div>
-              <p className="text-sm font-medium text-stone-900">{clientName}</p>
-              <p className="text-sm text-stone-500">{clientPhone}</p>
+              <p className="text-sm font-medium text-[#1d1d1f]">{clientName}</p>
+              <p className="text-sm text-[#86868b]">{clientPhone}</p>
             </div>
           </div>
 
@@ -141,7 +141,7 @@ export function OutboundCallModal({
               callStatus === 'initiating' ? 'bg-amber-50' :
               callStatus === 'ringing' ? 'bg-blue-50' :
               callStatus === 'in-progress' ? 'bg-emerald-50' :
-              callStatus === 'completed' ? 'bg-violet-50' :
+              callStatus === 'completed' ? 'bg-[#f5f5f7]' :
               'bg-red-50'
             }`}>
               {callStatus === 'initiating' && (
@@ -164,8 +164,8 @@ export function OutboundCallModal({
               )}
               {callStatus === 'completed' && (
                 <>
-                  <CheckCircle2 className="w-5 h-5 text-violet-600" />
-                  <span className="text-sm font-medium text-violet-700">Call completed</span>
+                  <CheckCircle2 className="w-5 h-5 text-[#1d1d1f]" />
+                  <span className="text-sm font-medium text-[#424245]">Call completed</span>
                 </>
               )}
               {callStatus === 'error' && (
@@ -182,13 +182,13 @@ export function OutboundCallModal({
             <>
               {/* Purpose selector */}
               <div>
-                <label className="block text-sm font-medium text-stone-700 mb-2">
+                <label className="block text-sm font-medium text-[#424245] mb-2">
                   Call Purpose
                 </label>
                 <select
                   value={purpose}
                   onChange={(e) => setPurpose(e.target.value as CallPurpose)}
-                  className="w-full px-4 py-2.5 text-sm border border-stone-300 rounded-xl bg-white text-stone-900 focus:ring-2 focus:ring-violet-500 focus:border-transparent"
+                  className="w-full px-4 py-2.5 text-sm border border-[#d2d2d7] rounded-xl bg-white text-[#1d1d1f] focus:ring-2 focus:ring-[#0066CC] focus:border-transparent"
                 >
                   {Object.entries(PURPOSE_LABELS).map(([value, label]) => (
                     <option key={value} value={value}>
@@ -196,47 +196,47 @@ export function OutboundCallModal({
                     </option>
                   ))}
                 </select>
-                <p className="mt-1.5 text-xs text-stone-400">
+                <p className="mt-1.5 text-xs text-[#86868b]">
                   {PURPOSE_DESCRIPTIONS[purpose]}
                 </p>
               </div>
 
               {/* Custom message */}
               <div>
-                <label className="block text-sm font-medium text-stone-700 mb-2">
-                  Custom Message <span className="text-stone-400 font-normal">(optional)</span>
+                <label className="block text-sm font-medium text-[#424245] mb-2">
+                  Custom Message <span className="text-[#86868b] font-normal">(optional)</span>
                 </label>
                 <textarea
                   value={customMessage}
                   onChange={(e) => setCustomMessage(e.target.value)}
                   placeholder="Override the default greeting message..."
                   rows={3}
-                  className="w-full px-4 py-2.5 text-sm border border-stone-300 rounded-xl resize-none bg-white text-stone-900 placeholder:text-stone-400 focus:ring-2 focus:ring-violet-500 focus:border-transparent"
+                  className="w-full px-4 py-2.5 text-sm border border-[#d2d2d7] rounded-xl resize-none bg-white text-[#1d1d1f] placeholder:text-[#86868b] focus:ring-2 focus:ring-[#0066CC] focus:border-transparent"
                 />
               </div>
             </>
           )}
 
           {callId && (
-            <p className="text-xs text-stone-400">
+            <p className="text-xs text-[#86868b]">
               Call ID: <span className="font-mono">{callId}</span>
             </p>
           )}
         </div>
 
         {/* Footer */}
-        <div className="flex items-center gap-3 px-6 py-4 border-t border-stone-100 bg-stone-50">
+        <div className="flex items-center gap-3 px-6 py-4 border-t border-[#f5f5f7] bg-[#f5f5f7]">
           {(callStatus === 'idle' || callStatus === 'error') && (
             <>
               <button
                 onClick={onClose}
-                className="flex-1 px-4 py-2.5 text-sm font-medium text-stone-700 bg-white border border-stone-300 rounded-xl hover:bg-stone-50 transition-colors"
+                className="flex-1 px-4 py-2.5 text-sm font-medium text-[#424245] bg-white border border-[#d2d2d7] rounded-xl hover:bg-[#f5f5f7] transition-colors"
               >
                 Cancel
               </button>
               <button
                 onClick={startCall}
-                className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-medium text-white bg-violet-600 rounded-xl hover:bg-violet-700 transition-colors"
+                className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-medium text-white bg-[#1d1d1f] rounded-xl hover:bg-black transition-colors"
               >
                 <Phone className="w-4 h-4" />
                 Start Call
@@ -246,7 +246,7 @@ export function OutboundCallModal({
           {(callStatus === 'initiating' || callStatus === 'ringing' || callStatus === 'in-progress') && (
             <button
               onClick={onClose}
-              className="flex-1 px-4 py-2.5 text-sm font-medium text-stone-600 bg-white border border-stone-300 rounded-xl hover:bg-stone-50 transition-colors"
+              className="flex-1 px-4 py-2.5 text-sm font-medium text-[#424245] bg-white border border-[#d2d2d7] rounded-xl hover:bg-[#f5f5f7] transition-colors"
             >
               Close (call continues in background)
             </button>
@@ -254,7 +254,7 @@ export function OutboundCallModal({
           {callStatus === 'completed' && (
             <button
               onClick={onClose}
-              className="flex-1 px-4 py-2.5 text-sm font-medium text-white bg-violet-600 rounded-xl hover:bg-violet-700 transition-colors"
+              className="flex-1 px-4 py-2.5 text-sm font-medium text-white bg-[#1d1d1f] rounded-xl hover:bg-black transition-colors"
             >
               Done
             </button>

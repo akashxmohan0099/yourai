@@ -63,8 +63,8 @@ export function FeaturesStep({ tenantId, selectedFeatures, onFeaturesChange, onN
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-lg font-semibold text-zinc-900">What do you need for your business?</h2>
-        <p className="text-sm text-zinc-500 mt-1">Select the features you want. You can change these anytime.</p>
+        <h2 className="text-lg font-semibold text-[#1d1d1f]">What do you need for your business?</h2>
+        <p className="text-sm text-[#86868b] mt-1">Select the features you want. You can change these anytime.</p>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -79,45 +79,45 @@ export function FeaturesStep({ tenantId, selectedFeatures, onFeaturesChange, onN
               type="button"
               onClick={() => toggleFeature(feature.key)}
               className={cn(
-                'flex items-start gap-3 p-4 rounded-lg border text-left transition-colors',
+                'flex items-start gap-3 p-4 rounded-2xl border text-left transition-colors',
                 isSelected
-                  ? 'border-indigo-600 bg-indigo-50/50'
-                  : 'border-zinc-200 hover:border-zinc-300 hover:bg-zinc-50',
+                  ? 'border-[#1d1d1f] bg-[#f5f5f7]/50'
+                  : 'border-[#d2d2d7] hover:border-[#86868b] hover:bg-[#f5f5f7]',
                 isLocked && 'cursor-default opacity-90'
               )}
             >
               <div className={cn(
-                'w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0',
-                isSelected ? 'bg-indigo-100' : 'bg-zinc-100'
+                'w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0',
+                isSelected ? 'bg-[#f5f5f7]' : 'bg-[#f5f5f7]'
               )}>
-                <IconComponent className={cn('w-4 h-4', isSelected ? 'text-indigo-600' : 'text-zinc-400')} />
+                <IconComponent className={cn('w-4 h-4', isSelected ? 'text-[#1d1d1f]' : 'text-[#86868b]')} />
               </div>
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2">
-                  <span className={cn('font-medium text-sm', isSelected ? 'text-zinc-900' : 'text-zinc-700')}>
+                  <span className={cn('font-medium text-sm', isSelected ? 'text-[#1d1d1f]' : 'text-[#1d1d1f]')}>
                     {feature.label}
                   </span>
                   {isLocked && (
-                    <span className="text-[11px] bg-indigo-100 text-indigo-600 px-1.5 py-0.5 rounded font-medium">
+                    <span className="text-[11px] bg-[#f5f5f7] text-[#1d1d1f] px-1.5 py-0.5 rounded font-medium">
                       Always on
                     </span>
                   )}
                 </div>
-                <p className="text-xs text-zinc-500 mt-0.5 leading-relaxed">{feature.description}</p>
+                <p className="text-xs text-[#86868b] mt-0.5 leading-relaxed">{feature.description}</p>
               </div>
               {!isLocked && (
                 <div className={cn(
                   'w-4 h-4 rounded border flex items-center justify-center flex-shrink-0 mt-0.5 transition-colors',
                   isSelected
-                    ? 'border-indigo-600 bg-indigo-600'
-                    : 'border-zinc-300'
+                    ? 'border-[#1d1d1f] bg-[#1d1d1f]'
+                    : 'border-[#d2d2d7]'
                 )}>
                   {isSelected && <Icons.Check className="w-3 h-3 text-white" />}
                 </div>
               )}
               {isLocked && (
-                <div className="w-4 h-4 rounded border border-indigo-300 bg-indigo-100 flex items-center justify-center flex-shrink-0 mt-0.5">
-                  <Icons.Check className="w-3 h-3 text-indigo-600" />
+                <div className="w-4 h-4 rounded border border-[#d2d2d7] bg-[#f5f5f7] flex items-center justify-center flex-shrink-0 mt-0.5">
+                  <Icons.Check className="w-3 h-3 text-[#1d1d1f]" />
                 </div>
               )}
             </button>
@@ -125,18 +125,18 @@ export function FeaturesStep({ tenantId, selectedFeatures, onFeaturesChange, onN
         })}
       </div>
 
-      <div className="flex justify-between pt-2 border-t border-zinc-100">
+      <div className="flex justify-between pt-2 border-t border-[#f5f5f7]">
         <button
           type="button"
           onClick={onBack}
-          className="px-5 py-2 text-sm font-medium text-zinc-700 hover:text-zinc-900 hover:bg-zinc-50 rounded-lg transition-colors"
+          className="px-5 py-2 text-sm font-medium text-[#1d1d1f] hover:text-black hover:bg-[#f5f5f7] rounded-xl transition-colors"
         >
           Back
         </button>
         <button
           onClick={handleSubmit}
           disabled={saving}
-          className="px-6 py-2 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700 disabled:opacity-50 transition-colors"
+          className="px-6 py-2 bg-[#1d1d1f] text-white text-sm font-medium rounded-xl hover:bg-black disabled:opacity-50 transition-colors"
         >
           {saving ? 'Saving...' : 'Continue'}
         </button>

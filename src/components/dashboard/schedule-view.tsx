@@ -35,45 +35,45 @@ export function ScheduleView({ initialAppointments }: ScheduleViewProps) {
   }
 
   return (
-    <div className="bg-white rounded-2xl border border-stone-200 shadow-sm">
-      <div className="px-6 py-5 border-b border-stone-200 flex items-center justify-between">
-        <h2 className="text-lg font-semibold text-stone-900">This Week</h2>
+    <div className="bg-white rounded-2xl border border-[#d2d2d7] shadow-sm">
+      <div className="px-6 py-5 border-b border-[#d2d2d7] flex items-center justify-between">
+        <h2 className="text-lg font-semibold text-[#1d1d1f]">This Week</h2>
         <div className="flex items-center gap-2">
           <button
             onClick={() => setWeekOffset(weekOffset - 1)}
-            className="p-2 hover:bg-stone-100 rounded-xl transition-colors"
+            className="p-2 hover:bg-[#f5f5f7] rounded-xl transition-colors"
           >
-            <ChevronLeft className="w-5 h-5 text-stone-600" />
+            <ChevronLeft className="w-5 h-5 text-[#424245]" />
           </button>
           <button
             onClick={() => setWeekOffset(0)}
-            className="px-4 py-1.5 text-sm font-medium text-violet-600 hover:bg-violet-50 rounded-xl transition-colors"
+            className="px-4 py-1.5 text-sm font-medium text-[#1d1d1f] hover:bg-[#f5f5f7] rounded-xl transition-colors"
           >
             Today
           </button>
           <button
             onClick={() => setWeekOffset(weekOffset + 1)}
-            className="p-2 hover:bg-stone-100 rounded-xl transition-colors"
+            className="p-2 hover:bg-[#f5f5f7] rounded-xl transition-colors"
           >
-            <ChevronRight className="w-5 h-5 text-stone-600" />
+            <ChevronRight className="w-5 h-5 text-[#424245]" />
           </button>
         </div>
       </div>
 
-      <div className="grid grid-cols-7 divide-x divide-stone-100">
+      <div className="grid grid-cols-7 divide-x divide-[#f5f5f7]">
         {days.map((date, i) => {
           const dayAppts = getAppointmentsForDay(date)
           return (
             <div key={i} className="min-h-[160px]">
               <div
-                className={`px-2 py-3 text-center border-b border-stone-100 ${
-                  isToday(date) ? 'bg-violet-50' : ''
+                className={`px-2 py-3 text-center border-b border-[#f5f5f7] ${
+                  isToday(date) ? 'bg-[#f5f5f7]' : ''
                 }`}
               >
-                <p className="text-xs font-medium text-stone-500 uppercase tracking-wide">{DAYS[i]}</p>
+                <p className="text-xs font-medium text-[#86868b] uppercase tracking-wide">{DAYS[i]}</p>
                 <p
                   className={`text-base font-semibold mt-0.5 ${
-                    isToday(date) ? 'text-violet-600' : 'text-stone-900'
+                    isToday(date) ? 'text-[#1d1d1f]' : 'text-[#1d1d1f]'
                   }`}
                 >
                   {date.getDate()}
@@ -86,7 +86,7 @@ export function ScheduleView({ initialAppointments }: ScheduleViewProps) {
                       ? 'bg-emerald-50 border-emerald-200 text-emerald-800'
                       : apt.status === 'pending'
                       ? 'bg-amber-50 border-amber-200 text-amber-800'
-                      : 'bg-stone-50 border-stone-200 text-stone-700'
+                      : 'bg-[#f5f5f7] border-[#d2d2d7] text-[#424245]'
                   return (
                     <div
                       key={apt.id}

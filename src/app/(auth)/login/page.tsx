@@ -37,26 +37,26 @@ export default function LoginPage() {
     <div className="min-h-screen flex items-center justify-center bg-white px-4">
       <div className="w-full max-w-sm">
         <div className="text-center mb-8">
-          <span className="text-lg font-semibold tracking-tight text-zinc-900">
+          <span className="text-lg font-semibold tracking-tight text-[#1d1d1f]">
             YourAI
           </span>
-          <h1 className="mt-6 text-xl font-semibold text-zinc-900">
+          <h1 className="mt-6 text-xl font-semibold text-[#1d1d1f]">
             Welcome back
           </h1>
-          <p className="mt-1.5 text-sm text-zinc-500">
+          <p className="mt-1.5 text-sm text-[#86868b]">
             Sign in to your account.
           </p>
         </div>
 
         <form onSubmit={handleLogin} className="space-y-4">
           {error && (
-            <div className="bg-red-50 border border-red-200 text-red-700 px-3 py-2.5 rounded-lg text-sm">
+            <div className="bg-red-50 border border-red-200 text-red-700 px-3 py-2.5 rounded-xl text-sm">
               {error}
             </div>
           )}
 
           <div>
-            <label htmlFor="email" className="block text-sm font-medium text-zinc-700 mb-1.5">
+            <label htmlFor="email" className="block text-sm font-medium text-[#1d1d1f] mb-1.5">
               Email
             </label>
             <input
@@ -65,13 +65,13 @@ export default function LoginPage() {
               required
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="block w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm text-zinc-900 focus:border-indigo-600 focus:outline-none focus:ring-1 focus:ring-indigo-600 placeholder:text-zinc-400"
+              className="block w-full rounded-xl border border-[#d2d2d7] px-3 py-2 text-sm text-[#1d1d1f] focus:border-[#0066CC] focus:outline-none focus:ring-1 focus:ring-[#0066CC] placeholder:text-[#86868b]"
               placeholder="you@example.com"
             />
           </div>
 
           <div>
-            <label htmlFor="password" className="block text-sm font-medium text-zinc-700 mb-1.5">
+            <label htmlFor="password" className="block text-sm font-medium text-[#1d1d1f] mb-1.5">
               Password
             </label>
             <input
@@ -80,7 +80,7 @@ export default function LoginPage() {
               required
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="block w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm text-zinc-900 focus:border-indigo-600 focus:outline-none focus:ring-1 focus:ring-indigo-600 placeholder:text-zinc-400"
+              className="block w-full rounded-xl border border-[#d2d2d7] px-3 py-2 text-sm text-[#1d1d1f] focus:border-[#0066CC] focus:outline-none focus:ring-1 focus:ring-[#0066CC] placeholder:text-[#86868b]"
               placeholder="Enter your password"
             />
           </div>
@@ -88,15 +88,15 @@ export default function LoginPage() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full py-2 px-4 rounded-lg text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            className="w-full py-2 px-4 rounded-xl text-sm font-medium text-white bg-[#1d1d1f] hover:bg-black focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#0066CC] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
             {loading ? 'Signing in...' : 'Sign in'}
           </button>
         </form>
 
-        <p className="mt-6 text-center text-sm text-zinc-500">
+        <p className="mt-6 text-center text-sm text-[#86868b]">
           Don&apos;t have an account?{' '}
-          <Link href="/signup" className="text-indigo-600 hover:text-indigo-700 font-medium">
+          <Link href="/signup" className="text-[#0066CC] hover:text-[#0055AA] font-medium">
             Sign up
           </Link>
         </p>

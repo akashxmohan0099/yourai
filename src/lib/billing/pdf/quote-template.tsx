@@ -40,14 +40,14 @@ const fmt = (cents: number) => `$${(cents / 100).toFixed(2)}`
 /* ─── Colors ────────────────────────────────────────────────────── */
 
 const C = {
-  violet: '#7c3aed',
-  violetLight: '#ede9fe',
-  dark: '#1c1917',
-  secondary: '#78716c',
-  lightBg: '#fafaf9',
-  border: '#e7e5e4',
+  primary: '#1d1d1f',
+  primaryLight: '#f5f5f7',
+  dark: '#1d1d1f',
+  secondary: '#86868b',
+  lightBg: '#f5f5f7',
+  border: '#d2d2d7',
   white: '#ffffff',
-  rowAlt: '#f5f5f4',
+  rowAlt: '#f5f5f7',
 } as const
 
 /* ─── Styles ────────────────────────────────────────────────────── */
@@ -83,7 +83,7 @@ const s = StyleSheet.create({
   quoteLabel: {
     fontFamily: 'Helvetica-Bold',
     fontSize: 28,
-    color: C.violet,
+    color: C.primary,
     textAlign: 'right' as const,
     marginBottom: 4,
   },
@@ -96,7 +96,7 @@ const s = StyleSheet.create({
   /* Divider */
   divider: {
     height: 2,
-    backgroundColor: C.violet,
+    backgroundColor: C.primary,
     marginBottom: 24,
   },
   thinDivider: {
@@ -117,7 +117,7 @@ const s = StyleSheet.create({
   infoLabel: {
     fontFamily: 'Helvetica-Bold',
     fontSize: 8,
-    color: C.violet,
+    color: C.primary,
     textTransform: 'uppercase' as const,
     letterSpacing: 1,
     marginBottom: 6,
@@ -136,7 +136,7 @@ const s = StyleSheet.create({
   /* Table */
   tableHeader: {
     flexDirection: 'row',
-    backgroundColor: C.violet,
+    backgroundColor: C.primary,
     borderTopLeftRadius: 4,
     borderTopRightRadius: 4,
     paddingVertical: 8,
@@ -207,7 +207,7 @@ const s = StyleSheet.create({
   grandTotalValue: {
     fontFamily: 'Helvetica-Bold',
     fontSize: 13,
-    color: C.violet,
+    color: C.primary,
   },
 
   /* Notes */
@@ -222,7 +222,7 @@ const s = StyleSheet.create({
   notesTitle: {
     fontFamily: 'Helvetica-Bold',
     fontSize: 9,
-    color: C.violet,
+    color: C.primary,
     textTransform: 'uppercase' as const,
     letterSpacing: 0.8,
     marginBottom: 6,
@@ -253,7 +253,7 @@ const s = StyleSheet.create({
   footerBrand: {
     fontFamily: 'Helvetica-Bold',
     fontSize: 8,
-    color: C.violet,
+    color: C.primary,
   },
 })
 
@@ -313,7 +313,7 @@ export function QuotePDF(props: QuotePDFProps) {
           </View>
         </View>
 
-        {/* ── Violet Divider ── */}
+        {/* ── Divider ── */}
         <View style={s.divider} />
 
         {/* ── Client + Meta ── */}

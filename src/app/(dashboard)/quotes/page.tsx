@@ -14,8 +14,8 @@ export default async function QuotesPage() {
     .limit(50)
 
   const statusColors: Record<string, string> = {
-    draft: 'bg-stone-100 text-stone-600',
-    sent: 'bg-violet-100 text-violet-700',
+    draft: 'bg-[#f5f5f7] text-[#424245]',
+    sent: 'bg-[#f5f5f7] text-[#1d1d1f]',
     accepted: 'bg-emerald-100 text-emerald-700',
     rejected: 'bg-red-100 text-red-700',
     expired: 'bg-amber-100 text-amber-700',
@@ -27,17 +27,17 @@ export default async function QuotesPage() {
   const draft = (quotes || []).filter((q: any) => q.status === 'draft').length
 
   const summaryCards = [
-    { label: 'Total Quotes', value: total, icon: FileText, color: 'text-violet-600', bg: 'bg-violet-50' },
-    { label: 'Sent', value: sent, icon: Send, color: 'text-violet-600', bg: 'bg-violet-50' },
+    { label: 'Total Quotes', value: total, icon: FileText, color: 'text-[#1d1d1f]', bg: 'bg-[#f5f5f7]' },
+    { label: 'Sent', value: sent, icon: Send, color: 'text-[#1d1d1f]', bg: 'bg-[#f5f5f7]' },
     { label: 'Accepted', value: accepted, icon: CheckCircle, color: 'text-emerald-600', bg: 'bg-emerald-50' },
-    { label: 'Drafts', value: draft, icon: Clock, color: 'text-stone-500', bg: 'bg-stone-50' },
+    { label: 'Drafts', value: draft, icon: Clock, color: 'text-[#86868b]', bg: 'bg-[#f5f5f7]' },
   ]
 
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-semibold text-stone-900 mb-1">Quotes</h1>
-        <p className="text-stone-500">Create and track quotes for your clients</p>
+        <h1 className="text-2xl font-semibold text-[#1d1d1f] mb-1">Quotes</h1>
+        <p className="text-[#86868b]">Create and track quotes for your clients</p>
       </div>
 
       {/* Summary cards */}
@@ -45,33 +45,33 @@ export default async function QuotesPage() {
         {summaryCards.map((card) => {
           const Icon = card.icon
           return (
-            <div key={card.label} className="bg-white rounded-2xl border border-stone-200 shadow-sm p-5">
+            <div key={card.label} className="bg-white rounded-2xl border border-[#d2d2d7] shadow-sm p-5">
               <div className="flex items-center gap-3 mb-2">
                 <div className={`p-2 rounded-xl ${card.bg}`}>
                   <Icon className={`w-4 h-4 ${card.color}`} />
                 </div>
               </div>
-              <p className="text-2xl font-semibold text-stone-900">{card.value}</p>
-              <p className="text-sm text-stone-500 mt-0.5">{card.label}</p>
+              <p className="text-2xl font-semibold text-[#1d1d1f]">{card.value}</p>
+              <p className="text-sm text-[#86868b] mt-0.5">{card.label}</p>
             </div>
           )
         })}
       </div>
 
-      <div className="bg-white rounded-2xl border border-stone-200 shadow-sm">
+      <div className="bg-white rounded-2xl border border-[#d2d2d7] shadow-sm">
         {!quotes || quotes.length === 0 ? (
           <div className="px-6 py-16 text-center">
-            <div className="w-12 h-12 rounded-2xl bg-violet-50 flex items-center justify-center mx-auto mb-4">
-              <FileText className="w-6 h-6 text-violet-400" />
+            <div className="w-12 h-12 rounded-2xl bg-[#f5f5f7] flex items-center justify-center mx-auto mb-4">
+              <FileText className="w-6 h-6 text-[#86868b]" />
             </div>
-            <p className="text-stone-700 font-medium mb-1">No quotes yet</p>
-            <p className="text-sm text-stone-500">
+            <p className="text-[#424245] font-medium mb-1">No quotes yet</p>
+            <p className="text-sm text-[#86868b]">
               Ask your AI assistant to create a quote for a client
             </p>
           </div>
         ) : (
-          <div className="divide-y divide-stone-100">
-            <div className="grid grid-cols-[1fr_1fr_1fr_1fr_1fr_1fr_auto] gap-4 px-6 py-3.5 text-xs font-medium text-stone-500 uppercase tracking-wide bg-stone-50 rounded-t-2xl">
+          <div className="divide-y divide-[#f5f5f7]">
+            <div className="grid grid-cols-[1fr_1fr_1fr_1fr_1fr_1fr_auto] gap-4 px-6 py-3.5 text-xs font-medium text-[#86868b] uppercase tracking-wide bg-[#f5f5f7] rounded-t-2xl">
               <span>Quote #</span>
               <span>Client</span>
               <span>Total</span>
@@ -81,21 +81,21 @@ export default async function QuotesPage() {
               <span className="w-8"></span>
             </div>
             {quotes.map((q: any) => (
-              <div key={q.id} className="grid grid-cols-[1fr_1fr_1fr_1fr_1fr_1fr_auto] gap-4 px-6 py-4 items-center hover:bg-stone-50 transition-colors">
-                <span className="text-sm font-medium text-stone-900">{q.quote_number}</span>
-                <span className="text-sm text-stone-700">{q.clients?.name || 'N/A'}</span>
-                <span className="text-sm font-semibold text-stone-900">
+              <div key={q.id} className="grid grid-cols-[1fr_1fr_1fr_1fr_1fr_1fr_auto] gap-4 px-6 py-4 items-center hover:bg-[#f5f5f7] transition-colors">
+                <span className="text-sm font-medium text-[#1d1d1f]">{q.quote_number}</span>
+                <span className="text-sm text-[#424245]">{q.clients?.name || 'N/A'}</span>
+                <span className="text-sm font-semibold text-[#1d1d1f]">
                   ${(q.total_cents / 100).toFixed(2)}
                 </span>
                 <span>
-                  <span className={`inline-block px-3 py-1 text-xs font-medium rounded-full ${statusColors[q.status] || 'bg-stone-100 text-stone-600'}`}>
+                  <span className={`inline-block px-3 py-1 text-xs font-medium rounded-full ${statusColors[q.status] || 'bg-[#f5f5f7] text-[#424245]'}`}>
                     {q.status}
                   </span>
                 </span>
-                <span className="text-sm text-stone-500">
+                <span className="text-sm text-[#86868b]">
                   {q.valid_until ? new Date(q.valid_until).toLocaleDateString() : '--'}
                 </span>
-                <span className="text-sm text-stone-500">
+                <span className="text-sm text-[#86868b]">
                   {new Date(q.created_at).toLocaleDateString()}
                 </span>
                 <a
@@ -103,7 +103,7 @@ export default async function QuotesPage() {
                   target="_blank"
                   rel="noopener noreferrer"
                   title="Download PDF"
-                  className="inline-flex items-center justify-center w-8 h-8 rounded-lg text-stone-400 hover:text-violet-600 hover:bg-violet-50 transition-colors"
+                  className="inline-flex items-center justify-center w-8 h-8 rounded-lg text-[#86868b] hover:text-[#1d1d1f] hover:bg-[#f5f5f7] transition-colors"
                 >
                   <Download className="w-4 h-4" />
                 </a>

@@ -14,11 +14,11 @@ export default async function InvoicesPage() {
     .limit(50)
 
   const statusColors: Record<string, string> = {
-    draft: 'bg-stone-100 text-stone-600',
-    sent: 'bg-violet-100 text-violet-700',
+    draft: 'bg-[#f5f5f7] text-[#424245]',
+    sent: 'bg-[#f5f5f7] text-[#1d1d1f]',
     paid: 'bg-emerald-100 text-emerald-700',
     overdue: 'bg-red-100 text-red-700',
-    cancelled: 'bg-stone-100 text-stone-500',
+    cancelled: 'bg-[#f5f5f7] text-[#86868b]',
   }
 
   // Calculate totals
@@ -33,55 +33,55 @@ export default async function InvoicesPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-semibold text-stone-900 mb-1">Invoices</h1>
-        <p className="text-stone-500">{invoices?.length || 0} invoices total</p>
+        <h1 className="text-2xl font-semibold text-[#1d1d1f] mb-1">Invoices</h1>
+        <p className="text-[#86868b]">{invoices?.length || 0} invoices total</p>
       </div>
 
       {/* Summary cards */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <div className="bg-white rounded-2xl border border-stone-200 shadow-sm p-6">
+        <div className="bg-white rounded-2xl border border-[#d2d2d7] shadow-sm p-6">
           <div className="flex items-center gap-3 mb-3">
             <div className="p-2 rounded-xl bg-amber-50">
               <DollarSign className="w-4 h-4 text-amber-600" />
             </div>
-            <span className="text-sm text-stone-500">Outstanding</span>
+            <span className="text-sm text-[#86868b]">Outstanding</span>
           </div>
           <p className="text-2xl font-semibold text-amber-600">${(totalOutstanding / 100).toFixed(2)}</p>
         </div>
-        <div className="bg-white rounded-2xl border border-stone-200 shadow-sm p-6">
+        <div className="bg-white rounded-2xl border border-[#d2d2d7] shadow-sm p-6">
           <div className="flex items-center gap-3 mb-3">
             <div className="p-2 rounded-xl bg-emerald-50">
               <CheckCircle className="w-4 h-4 text-emerald-600" />
             </div>
-            <span className="text-sm text-stone-500">Paid</span>
+            <span className="text-sm text-[#86868b]">Paid</span>
           </div>
           <p className="text-2xl font-semibold text-emerald-600">${(totalPaid / 100).toFixed(2)}</p>
         </div>
-        <div className="bg-white rounded-2xl border border-stone-200 shadow-sm p-6">
+        <div className="bg-white rounded-2xl border border-[#d2d2d7] shadow-sm p-6">
           <div className="flex items-center gap-3 mb-3">
             <div className="p-2 rounded-xl bg-red-50">
               <AlertTriangle className="w-4 h-4 text-red-500" />
             </div>
-            <span className="text-sm text-stone-500">Overdue</span>
+            <span className="text-sm text-[#86868b]">Overdue</span>
           </div>
           <p className="text-2xl font-semibold text-red-600">{overdueCount}</p>
         </div>
       </div>
 
-      <div className="bg-white rounded-2xl border border-stone-200 shadow-sm">
+      <div className="bg-white rounded-2xl border border-[#d2d2d7] shadow-sm">
         {!invoices || invoices.length === 0 ? (
           <div className="px-6 py-16 text-center">
-            <div className="w-12 h-12 rounded-2xl bg-violet-50 flex items-center justify-center mx-auto mb-4">
-              <Receipt className="w-6 h-6 text-violet-400" />
+            <div className="w-12 h-12 rounded-2xl bg-[#f5f5f7] flex items-center justify-center mx-auto mb-4">
+              <Receipt className="w-6 h-6 text-[#86868b]" />
             </div>
-            <p className="text-stone-700 font-medium mb-1">No invoices yet</p>
-            <p className="text-sm text-stone-500">
+            <p className="text-[#424245] font-medium mb-1">No invoices yet</p>
+            <p className="text-sm text-[#86868b]">
               Invoices will appear here once you create them
             </p>
           </div>
         ) : (
-          <div className="divide-y divide-stone-100">
-            <div className="grid grid-cols-7 gap-4 px-6 py-3.5 text-xs font-medium text-stone-500 uppercase tracking-wide bg-stone-50 rounded-t-2xl">
+          <div className="divide-y divide-[#f5f5f7]">
+            <div className="grid grid-cols-7 gap-4 px-6 py-3.5 text-xs font-medium text-[#86868b] uppercase tracking-wide bg-[#f5f5f7] rounded-t-2xl">
               <span>Invoice #</span>
               <span>Client</span>
               <span>Total</span>
@@ -91,21 +91,21 @@ export default async function InvoicesPage() {
               <span className="text-right">PDF</span>
             </div>
             {invoices.map((inv: any) => (
-              <div key={inv.id} className="grid grid-cols-7 gap-4 px-6 py-4 items-center hover:bg-stone-50 transition-colors">
-                <span className="text-sm font-medium text-stone-900">{inv.invoice_number}</span>
-                <span className="text-sm text-stone-700">{inv.clients?.name || 'N/A'}</span>
-                <span className="text-sm font-semibold text-stone-900">
+              <div key={inv.id} className="grid grid-cols-7 gap-4 px-6 py-4 items-center hover:bg-[#f5f5f7] transition-colors">
+                <span className="text-sm font-medium text-[#1d1d1f]">{inv.invoice_number}</span>
+                <span className="text-sm text-[#424245]">{inv.clients?.name || 'N/A'}</span>
+                <span className="text-sm font-semibold text-[#1d1d1f]">
                   ${(inv.total_cents / 100).toFixed(2)}
                 </span>
                 <span>
-                  <span className={`inline-block px-3 py-1 text-xs font-medium rounded-full ${statusColors[inv.status] || 'bg-stone-100 text-stone-600'}`}>
+                  <span className={`inline-block px-3 py-1 text-xs font-medium rounded-full ${statusColors[inv.status] || 'bg-[#f5f5f7] text-[#424245]'}`}>
                     {inv.status}
                   </span>
                 </span>
-                <span className="text-sm text-stone-500">
+                <span className="text-sm text-[#86868b]">
                   {inv.due_date ? new Date(inv.due_date).toLocaleDateString() : '--'}
                 </span>
-                <span className="text-sm text-stone-500">
+                <span className="text-sm text-[#86868b]">
                   {new Date(inv.created_at).toLocaleDateString()}
                 </span>
                 <span className="text-right">
@@ -113,7 +113,7 @@ export default async function InvoicesPage() {
                     href={`/api/invoices/${inv.id}/pdf`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="inline-flex items-center justify-center w-8 h-8 rounded-lg text-stone-400 hover:text-violet-600 hover:bg-violet-50 transition-colors"
+                    className="inline-flex items-center justify-center w-8 h-8 rounded-lg text-[#86868b] hover:text-[#1d1d1f] hover:bg-[#f5f5f7] transition-colors"
                     title="View PDF"
                   >
                     <FileText className="w-4 h-4" />

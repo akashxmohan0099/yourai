@@ -108,14 +108,14 @@ export function BasicInfoStep({ tenantId, selectedTemplate, onTemplateSelect, on
     onNext()
   }
 
-  const inputClasses = 'w-full px-3 py-2 border border-zinc-300 rounded-lg text-sm text-zinc-900 placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-shadow'
+  const inputClasses = 'w-full px-3 py-2 border border-[#d2d2d7] rounded-xl text-sm text-[#1d1d1f] placeholder-[#86868b] focus:outline-none focus:ring-2 focus:ring-[#0066CC] focus:border-transparent transition-shadow'
 
   return (
     <form onSubmit={handleSubmit} className="space-y-8">
       {/* Business type selector */}
       <div>
-        <h2 className="text-lg font-semibold text-zinc-900">What type of business do you run?</h2>
-        <p className="text-sm text-zinc-500 mt-1 mb-5">This helps us set up the right tools and templates for you.</p>
+        <h2 className="text-lg font-semibold text-[#1d1d1f]">What type of business do you run?</h2>
+        <p className="text-sm text-[#86868b] mt-1 mb-5">This helps us set up the right tools and templates for you.</p>
 
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
           {BUSINESS_TYPE_TEMPLATES.map((template) => {
@@ -127,14 +127,14 @@ export function BasicInfoStep({ tenantId, selectedTemplate, onTemplateSelect, on
                 type="button"
                 onClick={() => onTemplateSelect(template)}
                 className={cn(
-                  'flex flex-col items-center gap-2 p-4 rounded-lg border transition-colors text-center',
+                  'flex flex-col items-center gap-2 p-4 rounded-2xl border transition-colors text-center',
                   isSelected
-                    ? 'border-indigo-600 bg-indigo-50'
-                    : 'border-zinc-200 hover:border-zinc-300 hover:bg-zinc-50'
+                    ? 'border-[#1d1d1f] bg-[#f5f5f7]'
+                    : 'border-[#d2d2d7] hover:border-[#86868b] hover:bg-[#f5f5f7]'
                 )}
               >
-                <IconComponent className={cn('w-5 h-5', isSelected ? 'text-indigo-600' : 'text-zinc-400')} />
-                <span className={cn('text-sm font-medium', isSelected ? 'text-indigo-700' : 'text-zinc-700')}>
+                <IconComponent className={cn('w-5 h-5', isSelected ? 'text-[#1d1d1f]' : 'text-[#86868b]')} />
+                <span className={cn('text-sm font-medium', isSelected ? 'text-[#1d1d1f]' : 'text-[#1d1d1f]')}>
                   {template.label}
                 </span>
               </button>
@@ -146,11 +146,11 @@ export function BasicInfoStep({ tenantId, selectedTemplate, onTemplateSelect, on
       {/* Contact details */}
       {selectedTemplate && (
         <div className="space-y-5">
-          <h3 className="text-lg font-semibold text-zinc-900">Business details</h3>
+          <h3 className="text-lg font-semibold text-[#1d1d1f]">Business details</h3>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="sm:col-span-2">
-              <label className="block text-sm font-medium text-zinc-700 mb-1.5">Business name *</label>
+              <label className="block text-sm font-medium text-[#1d1d1f] mb-1.5">Business name *</label>
               <input
                 required
                 value={form.business_name}
@@ -160,7 +160,7 @@ export function BasicInfoStep({ tenantId, selectedTemplate, onTemplateSelect, on
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-zinc-700 mb-1.5">Phone</label>
+              <label className="block text-sm font-medium text-[#1d1d1f] mb-1.5">Phone</label>
               <input
                 type="tel"
                 value={form.phone}
@@ -171,7 +171,7 @@ export function BasicInfoStep({ tenantId, selectedTemplate, onTemplateSelect, on
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-zinc-700 mb-1.5">Email</label>
+              <label className="block text-sm font-medium text-[#1d1d1f] mb-1.5">Email</label>
               <input
                 type="email"
                 value={form.email}
@@ -181,7 +181,7 @@ export function BasicInfoStep({ tenantId, selectedTemplate, onTemplateSelect, on
             </div>
 
             <div className="sm:col-span-2">
-              <label className="block text-sm font-medium text-zinc-700 mb-1.5">Website</label>
+              <label className="block text-sm font-medium text-[#1d1d1f] mb-1.5">Website</label>
               <input
                 type="url"
                 value={form.website}
@@ -192,7 +192,7 @@ export function BasicInfoStep({ tenantId, selectedTemplate, onTemplateSelect, on
             </div>
 
             <div className="sm:col-span-2">
-              <label className="block text-sm font-medium text-zinc-700 mb-1.5">Street address</label>
+              <label className="block text-sm font-medium text-[#1d1d1f] mb-1.5">Street address</label>
               <input
                 value={form.address_street}
                 onChange={(e) => setForm({ ...form, address_street: e.target.value })}
@@ -201,7 +201,7 @@ export function BasicInfoStep({ tenantId, selectedTemplate, onTemplateSelect, on
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-zinc-700 mb-1.5">City / Suburb</label>
+              <label className="block text-sm font-medium text-[#1d1d1f] mb-1.5">City / Suburb</label>
               <input
                 value={form.address_city}
                 onChange={(e) => setForm({ ...form, address_city: e.target.value })}
@@ -211,7 +211,7 @@ export function BasicInfoStep({ tenantId, selectedTemplate, onTemplateSelect, on
 
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="block text-sm font-medium text-zinc-700 mb-1.5">State</label>
+                <label className="block text-sm font-medium text-[#1d1d1f] mb-1.5">State</label>
                 <select
                   value={form.address_state}
                   onChange={(e) => setForm({ ...form, address_state: e.target.value })}
@@ -224,7 +224,7 @@ export function BasicInfoStep({ tenantId, selectedTemplate, onTemplateSelect, on
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium text-zinc-700 mb-1.5">Postcode</label>
+                <label className="block text-sm font-medium text-[#1d1d1f] mb-1.5">Postcode</label>
                 <input
                   value={form.address_postcode}
                   onChange={(e) => setForm({ ...form, address_postcode: e.target.value })}
@@ -237,11 +237,11 @@ export function BasicInfoStep({ tenantId, selectedTemplate, onTemplateSelect, on
         </div>
       )}
 
-      <div className="flex justify-end pt-2 border-t border-zinc-100">
+      <div className="flex justify-end pt-2 border-t border-[#f5f5f7]">
         <button
           type="submit"
           disabled={saving || !form.business_name || !selectedTemplate}
-          className="px-6 py-2 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          className="px-6 py-2 bg-[#1d1d1f] text-white text-sm font-medium rounded-xl hover:bg-black disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
         >
           {saving ? 'Saving...' : 'Continue'}
         </button>
