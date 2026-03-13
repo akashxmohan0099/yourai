@@ -6,6 +6,8 @@ export interface BusinessContext {
   description?: string
   tone: string
   customInstructions?: string
+  conversationStyle?: string
+  examplePhrases?: string
   phone?: string
   email?: string
   website?: string
@@ -61,6 +63,8 @@ export async function buildBusinessContext(
     description: config?.description || undefined,
     tone: config?.tone || 'friendly',
     customInstructions: config?.custom_instructions || undefined,
+    conversationStyle: config?.conversation_style || undefined,
+    examplePhrases: config?.example_phrases || undefined,
     phone: config?.phone || undefined,
     email: config?.email || undefined,
     website: config?.website || undefined,

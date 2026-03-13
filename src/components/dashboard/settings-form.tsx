@@ -26,6 +26,8 @@ interface SettingsFormProps {
     twilio_phone_number?: string | null
     owner_notification_phone?: string | null
     sms_enabled?: boolean | null
+    conversation_style?: string | null
+    example_phrases?: string | null
   } | null
 }
 
@@ -42,6 +44,8 @@ export function SettingsForm({ tenantId, tenantSlug, config }: SettingsFormProps
     website: config?.website || '',
     tone: config?.tone || 'friendly',
     custom_instructions: config?.custom_instructions || '',
+    conversation_style: config?.conversation_style || '',
+    example_phrases: config?.example_phrases || '',
     briefing_enabled: config?.briefing_enabled || false,
     briefing_time: config?.briefing_time || '07:00',
     nylas_grant_id: config?.nylas_grant_id || '',
@@ -276,38 +280,86 @@ export function SettingsForm({ tenantId, tenantSlug, config }: SettingsFormProps
         </div>
       </div>
 
-      {/* AI Settings */}
+      {/* AI Training */}
       <div className={sectionClass}>
         <div>
-          <h2 className="text-lg font-semibold text-[var(--ink)]">AI Settings</h2>
-          <p className="text-sm text-[var(--ink-faint)] mt-0.5">Customize how your AI assistant communicates</p>
+          <h2 className="text-lg font-semibold text-[var(--ink)]">AI Personality &amp; Training</h2>
+          <p className="text-sm text-[var(--ink-faint)] mt-0.5">
+            Shape how your AI talks to customers — tone, style, and the words it uses
+          </p>
         </div>
 
+        {/* Tone selector with descriptions */}
         <div>
           <label className={labelClass}>Tone</label>
-          <select
-            value={form.tone}
-            onChange={(e) => setForm({ ...form, tone: e.target.value })}
-            className={`${selectClass} w-full sm:w-56`}
-          >
-            <option value="professional">Professional</option>
-            <option value="friendly">Friendly</option>
-            <option value="casual">Casual</option>
-            <option value="formal">Formal</option>
-          </select>
-          <p className={noteClass}>This sets the overall personality of your AI.</p>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            {[
+              { value: 'friendly', label: 'Friendly', desc: 'Warm and natural, like a mate', icon: '~' },
+              { value: 'professional', label: 'Professional', desc: 'Polished but approachable', icon: '~' },
+              { value: 'casual', label: 'Casual', desc: 'Relaxed and laid-back', icon: '~' },
+              { value: 'formal', label: 'Formal', desc: 'Respectful and courteous', icon: '~' },
+            ].map((t) => (
+              <button
+                key={t.value}
+                type="button"
+                onClick={() => setForm({ ...form, tone: t.value })}
+                className={`rounded-2xl border p-4 text-left transition-colors ${
+                  form.tone === t.value
+                    ? 'border-[var(--teal)] bg-[rgba(43,114,107,0.08)]'
+                    : 'border-[var(--line)] hover:border-[var(--ink-faint)] bg-white/40'
+                }`}
+              >
+                <p className={`text-sm font-semibold ${form.tone === t.value ? 'text-[var(--teal)]' : 'text-[var(--ink)]'}`}>
+                  {t.label}
+                </p>
+                <p className="text-xs text-[var(--ink-faint)] mt-1">{t.desc}</p>
+              </button>
+            ))}
+          </div>
         </div>
 
+        {/* Conversation style */}
         <div>
-          <label className={labelClass}>Custom Instructions</label>
+          <label className={labelClass}>Conversation Style</label>
+          <textarea
+            value={form.conversation_style}
+            onChange={(e) => setForm({ ...form, conversation_style: e.target.value })}
+            rows={3}
+            placeholder={"Keep it short and sweet. Don't be too salesy. Be direct — answer the question first, then offer extras. If someone sounds like they're in a rush, match their energy and keep it brief."}
+            className={textareaClass}
+          />
+          <p className={noteClass}>Describe how you want your AI to talk — imagine telling a new receptionist how to handle calls.</p>
+        </div>
+
+        {/* Example phrases */}
+        <div>
+          <label className={labelClass}>Example Phrases</label>
+          <textarea
+            value={form.example_phrases}
+            onChange={(e) => setForm({ ...form, example_phrases: e.target.value })}
+            rows={4}
+            placeholder={`"Hey, thanks for calling! What can I do for ya?"\n"No worries at all, let me check that for you."\n"Sweet, you're all booked in!"\n"Anything else I can help with before you go?"`}
+            className={textareaClass}
+          />
+          <p className={noteClass}>
+            Write phrases the way YOU would say them. Your AI will match this style on calls and chats.
+            Put each phrase on its own line.
+          </p>
+        </div>
+
+        {/* Custom rules / instructions */}
+        <div>
+          <label className={labelClass}>Custom Rules</label>
           <textarea
             value={form.custom_instructions}
             onChange={(e) => setForm({ ...form, custom_instructions: e.target.value })}
             rows={4}
-            placeholder="Any special instructions for your AI assistant..."
+            placeholder={"Never offer discounts without asking me first.\nAlways suggest our premium package before the basic.\nIf someone asks about weekend availability, mention we're open Saturdays.\nDon't discuss competitor pricing."}
             className={textareaClass}
           />
-          <p className={noteClass}>Give your AI specific guidance on how to handle conversations.</p>
+          <p className={noteClass}>
+            Specific rules for your AI to follow. Things it should always do, never do, or watch out for.
+          </p>
         </div>
       </div>
 

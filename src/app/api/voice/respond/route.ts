@@ -462,13 +462,24 @@ async function handleAssistantRequest(body: VapiServerMessage): Promise<NextResp
   }
 
   // Create conversation for this call
+  let clientId: string | null = null
   if (callId) {
-    await getOrCreateCallConversation(supabase, tenantId, callId, callerNumber)
+    const conv = await getOrCreateCallConversation(supabase, tenantId, callId, callerNumber)
+    clientId = conv.clientId
   }
 
   // Build context
   const context = await buildBusinessContext(supabase, tenantId)
   const contextBlock = formatContextForPrompt(context)
+
+  // Build client context (memory across calls) — if we know who's calling
+  let clientBlock = ''
+  if (clientId) {
+    const clientCtx = await buildClientContext(supabase, tenantId, clientId)
+    if (clientCtx) {
+      clientBlock = `\n\n--- Customer Context ---\n${formatClientContextForPrompt(clientCtx)}`
+    }
+  }
 
   // Detect owner vs customer
   const assistantId = body.message?.call?.assistantId
@@ -481,22 +492,32 @@ async function handleAssistantRequest(body: VapiServerMessage): Promise<NextResp
     description: context.description,
     tone: context.tone,
     customInstructions: context.customInstructions,
+    conversationStyle: context.conversationStyle,
+    examplePhrases: context.examplePhrases,
     mode,
+    channel: 'voice',
   })
 
   const toolDefs = ownerCall ? getVapiOwnerToolDefs() : getVapiCustomerToolDefs()
   const appUrl = (process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000').trim()
   const serverFields = buildVapiServerFields(`${appUrl}/api/voice/respond`)
 
+  // Personalize greeting for returning callers
+  let firstMessage = `Hi! Thanks for calling ${context.businessName}. How can I help you today?`
+  if (clientId && clientBlock) {
+    // Let the AI handle personalized greeting via the system prompt + client context
+    firstMessage = `Hi! Thanks for calling ${context.businessName}. How can I help you?`
+  }
+
   return NextResponse.json({
     assistant: {
       name: `${context.businessName} Assistant`,
-      firstMessage: `Hi! Thanks for calling ${context.businessName}. How can I help you today?`,
+      firstMessage,
       model: {
         provider: 'anthropic',
         model: 'claude-sonnet-4-20250514',
         messages: [
-          { role: 'system', content: `${systemPrompt}\n\n--- Business Information ---\n${contextBlock}` },
+          { role: 'system', content: `${systemPrompt}\n\n--- Business Information ---\n${contextBlock}${clientBlock}` },
         ],
         tools: toolDefs,
       },

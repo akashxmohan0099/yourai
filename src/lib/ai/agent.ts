@@ -26,7 +26,10 @@ export async function runAgentStream(
     description: config.context.description,
     tone: config.context.tone,
     customInstructions: config.context.customInstructions,
+    conversationStyle: config.context.conversationStyle,
+    examplePhrases: config.context.examplePhrases,
     mode: config.mode,
+    channel: 'web_chat',
   })
 
   const contextBlock = formatContextForPrompt(config.context)
@@ -85,7 +88,10 @@ export async function runAgentSync(
     description: config.context.description,
     tone: config.context.tone,
     customInstructions: config.context.customInstructions,
+    conversationStyle: config.context.conversationStyle,
+    examplePhrases: config.context.examplePhrases,
     mode: config.mode,
+    channel: 'web_chat',
   })
 
   const contextBlock = formatContextForPrompt(config.context)
