@@ -39,6 +39,8 @@ export interface VapiServerMessage {
     }
     /** Call duration in seconds */
     durationSeconds?: number
+    /** Status of the call (for status-update messages) */
+    status?: string
     /** Present on transfer-destination-request messages */
     destination?: {
       type?: string

@@ -1,19 +1,69 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/admin'
-import { buildBusinessContext, buildClientContext, formatContextForPrompt } from '@/lib/ai/context-builder'
-import { runAgentSync } from '@/lib/ai/agent'
-import { normalizeIncomingMessage, resolveTenantFromChannel } from '@/lib/channels/normalizer'
-import type { VapiServerMessage, VapiServerResponse } from '@/lib/vapi/types'
-import { ModelMessage } from 'ai'
+import { buildBusinessContext, buildClientContext, formatContextForPrompt, formatClientContextForPrompt } from '@/lib/ai/context-builder'
+import { buildSystemPrompt } from '@/lib/ai/prompts/system'
+import { resolveTenantFromChannel } from '@/lib/channels/normalizer'
+import { resolveClient } from '@/lib/clients/resolver'
+import type { VapiServerMessage } from '@/lib/vapi/types'
 import { SupabaseClient } from '@supabase/supabase-js'
 import { buildVapiServerFields, verifyVapiRequest } from '@/lib/vapi/server-auth'
 
 export const maxDuration = 10 // Voice requires fast responses
 
+// ── Helpers ────────────────────────────────────────────────────────────
+
+/**
+ * Find or create a conversation record for a Vapi call.
+ * Stores callId in conversation metadata so end-of-call can find it.
+ */
+async function getOrCreateCallConversation(
+  supabase: SupabaseClient,
+  tenantId: string,
+  callId: string,
+  callerNumber?: string
+): Promise<{ conversationId: string; clientId: string | null }> {
+  // Try to find existing conversation by callId in metadata
+  const { data: existing } = await supabase
+    .from('conversations')
+    .select('id, client_id')
+    .eq('tenant_id', tenantId)
+    .eq('metadata->>callId', callId)
+    .single()
+
+  if (existing) {
+    return { conversationId: existing.id, clientId: existing.client_id }
+  }
+
+  // Resolve or create client from caller phone number
+  let clientId: string | null = null
+  if (callerNumber) {
+    const client = await resolveClient(supabase, {
+      tenantId,
+      channel: 'voice',
+      identifier: callerNumber,
+      metadata: { customerPhone: callerNumber },
+    })
+    clientId = client.id
+  }
+
+  // Create new conversation with callId in metadata
+  const { data: conv } = await supabase
+    .from('conversations')
+    .insert({
+      tenant_id: tenantId,
+      client_id: clientId,
+      channel: 'voice',
+      status: 'active',
+      metadata: { callId, callerNumber },
+    })
+    .select('id')
+    .single()
+
+  return { conversationId: conv?.id || '', clientId }
+}
+
 /**
  * Detect whether an incoming call is from the business owner/manager.
- * Checks both the caller's phone number against owner_notification_phone
- * and the Vapi assistant ID against vapi_owner_assistant_id.
  */
 async function isOwnerCall(
   supabase: SupabaseClient,
@@ -29,12 +79,10 @@ async function isOwnerCall(
 
   if (!config) return false
 
-  // Match by owner assistant ID (strongest signal)
   if (assistantId && config.vapi_owner_assistant_id && assistantId === config.vapi_owner_assistant_id) {
     return true
   }
 
-  // Match by caller phone number
   if (callerPhone && config.owner_notification_phone) {
     const normalizePhone = (p: string) => p.replace(/[\s\-\(\)]/g, '')
     if (normalizePhone(callerPhone) === normalizePhone(config.owner_notification_phone)) {
@@ -44,6 +92,160 @@ async function isOwnerCall(
 
   return false
 }
+
+// ── Vapi tool definitions (OpenAI function-calling format) ─────────────
+
+function getVapiCustomerToolDefs() {
+  return [
+    {
+      type: 'function',
+      function: {
+        name: 'getServices',
+        description: 'Get the list of services offered by the business, optionally filtered by category',
+        parameters: {
+          type: 'object',
+          properties: {
+            category: { type: 'string', description: 'Filter by service category' },
+          },
+        },
+      },
+    },
+    {
+      type: 'function',
+      function: {
+        name: 'getPricing',
+        description: 'Get pricing information for a specific service',
+        parameters: {
+          type: 'object',
+          properties: {
+            serviceName: { type: 'string', description: 'Name of the service to get pricing for' },
+          },
+          required: ['serviceName'],
+        },
+      },
+    },
+    {
+      type: 'function',
+      function: {
+        name: 'getHours',
+        description: 'Get the business hours for a specific day or all days',
+        parameters: {
+          type: 'object',
+          properties: {
+            day: { type: 'string', description: 'Specific day of the week (e.g., "monday"), or omit for all days' },
+          },
+        },
+      },
+    },
+    {
+      type: 'function',
+      function: {
+        name: 'getFaqs',
+        description: 'Search frequently asked questions for relevant answers',
+        parameters: {
+          type: 'object',
+          properties: {
+            query: { type: 'string', description: 'The question or topic to search FAQs for' },
+          },
+          required: ['query'],
+        },
+      },
+    },
+    {
+      type: 'function',
+      function: {
+        name: 'checkAvailability',
+        description: 'Check if the business is open on a given day and time',
+        parameters: {
+          type: 'object',
+          properties: {
+            day: { type: 'string', description: 'Day of the week (e.g., "monday")' },
+            time: { type: 'string', description: 'Time to check in HH:MM format (e.g., "14:00")' },
+          },
+          required: ['day'],
+        },
+      },
+    },
+    {
+      type: 'function',
+      function: {
+        name: 'createAppointment',
+        description: 'Book a new appointment for the caller. Checks for conflicts automatically. Ask the caller for their name, preferred service, date and time before calling this.',
+        parameters: {
+          type: 'object',
+          properties: {
+            clientName: { type: 'string', description: 'Full name of the client' },
+            serviceName: { type: 'string', description: 'Name of the service being booked' },
+            date: { type: 'string', description: 'Date for the appointment in YYYY-MM-DD format' },
+            time: { type: 'string', description: 'Start time in HH:MM format (24-hour)' },
+            durationMinutes: { type: 'number', description: 'Duration in minutes (uses service default if omitted)' },
+            notes: { type: 'string', description: 'Any additional notes' },
+          },
+          required: ['clientName', 'date', 'time'],
+        },
+      },
+    },
+  ]
+}
+
+function getVapiOwnerToolDefs() {
+  return [
+    ...getVapiCustomerToolDefs(),
+    {
+      type: 'function',
+      function: {
+        name: 'getSchedule',
+        description: "Get the schedule/appointments for a given time range. Use for today's schedule, tomorrow's appointments, or this week's bookings.",
+        parameters: {
+          type: 'object',
+          properties: {
+            range: {
+              type: 'string',
+              enum: ['today', 'tomorrow', 'this_week', 'next_week', 'custom'],
+              description: 'Time range to view',
+            },
+            customStartDate: { type: 'string', description: 'Start date for custom range (YYYY-MM-DD)' },
+            customEndDate: { type: 'string', description: 'End date for custom range (YYYY-MM-DD)' },
+          },
+          required: ['range'],
+        },
+      },
+    },
+    {
+      type: 'function',
+      function: {
+        name: 'searchClients',
+        description: 'Search for clients by name, email, or phone number',
+        parameters: {
+          type: 'object',
+          properties: {
+            query: { type: 'string', description: 'Search query — name, email, or phone number' },
+            limit: { type: 'number', description: 'Max results to return (default 5)' },
+          },
+          required: ['query'],
+        },
+      },
+    },
+    {
+      type: 'function',
+      function: {
+        name: 'addClientNote',
+        description: 'Add a note to a client record. Use for recording preferences or follow-up items.',
+        parameters: {
+          type: 'object',
+          properties: {
+            clientName: { type: 'string', description: 'Name of the client' },
+            note: { type: 'string', description: 'The note to add' },
+            tag: { type: 'string', description: 'Optional tag (e.g., "VIP", "follow-up")' },
+          },
+          required: ['clientName', 'note'],
+        },
+      },
+    },
+  ]
+}
+
+// ── Main handler ───────────────────────────────────────────────────────
 
 export async function POST(request: NextRequest) {
   try {
@@ -55,173 +257,170 @@ export async function POST(request: NextRequest) {
     const body: VapiServerMessage = await request.json()
     const messageType = body.message?.type
 
-    // Handle different message types
-    if (messageType === 'status-update') {
-      return NextResponse.json({})
-    }
+    switch (messageType) {
+      case 'assistant-request':
+        return await handleAssistantRequest(body)
 
-    if (messageType === 'end-of-call-report') {
-      // Save call summary in background
-      await handleEndOfCall(body)
-      return NextResponse.json({})
-    }
+      case 'tool-calls':
+        if (body.message?.toolCallList) {
+          return await handleToolCalls(body)
+        }
+        return NextResponse.json({})
 
-    if (messageType === 'transcript' || messageType === 'conversation-update') {
-      // These are informational, no response needed
-      return NextResponse.json({})
-    }
+      case 'status-update':
+        return await handleStatusUpdate(body)
 
-    // Handle squad transfer-destination-request (agent wants to hand off)
-    if (messageType === 'transfer-destination-request') {
-      return await handleTransferDestination(body)
-    }
+      case 'end-of-call-report':
+        await handleEndOfCall(body)
+        return NextResponse.json({})
 
-    // Handle assistant-request (Vapi asks which assistant to use for the call)
-    if (messageType === 'assistant-request') {
-      return await handleAssistantRequest(body)
-    }
+      case 'transfer-destination-request':
+        return await handleTransferDestination(body)
 
-    // Handle tool calls from Vapi
-    if (messageType === 'tool-calls' && body.message?.toolCallList) {
-      return await handleToolCalls(body)
-    }
+      // Informational messages — acknowledge but no action needed
+      case 'transcript':
+      case 'conversation-update':
+      case 'speech-update':
+      case 'hang':
+        return NextResponse.json({})
 
-    // For voice-input or function-call, run through our agent
-    if (messageType === 'voice-input' || messageType === 'function-call') {
-      return await handleVoiceInput(body)
+      default:
+        return NextResponse.json({})
     }
-
-    return NextResponse.json({})
   } catch (error) {
     console.error('Voice respond error:', error)
-    return NextResponse.json(
-      { messageResponse: { assistantMessage: { role: 'assistant', content: "I'm sorry, I'm having trouble right now. Please try again." } } },
-      { status: 200 } // Always return 200 to Vapi
-    )
+    // Always return 200 to Vapi to avoid retries
+    return NextResponse.json({})
   }
 }
 
-async function handleVoiceInput(body: VapiServerMessage): Promise<NextResponse> {
-  const supabase = createAdminClient()
+// ── assistant-request ──────────────────────────────────────────────────
+// Vapi asks which assistant to use. We return a full config with tools.
 
-  // Resolve tenant from phone number
+async function handleAssistantRequest(body: VapiServerMessage): Promise<NextResponse> {
+  const supabase = createAdminClient()
+  const callId = body.message?.call?.id
+  const callerNumber = body.message?.call?.customer?.number
+
   const tenantId = await resolveTenantFromChannel('voice', body.message)
   if (!tenantId) {
     return NextResponse.json({
-      messageResponse: {
-        assistantMessage: {
-          role: 'assistant',
-          content: "I'm sorry, this number isn't configured yet. Please contact the business directly.",
+      assistant: {
+        name: 'Default Assistant',
+        firstMessage: 'Hello! How can I help you today?',
+        model: {
+          provider: 'openai',
+          model: 'gpt-4o-mini',
+          messages: [
+            { role: 'system', content: 'You are a helpful business assistant. This number is not configured yet. Please ask the caller to try again later.' },
+          ],
         },
+        voice: { provider: '11labs', voiceId: 'bIHbv24MWmeRgasZH58o' },
       },
     })
   }
 
-  // Detect owner vs customer call
-  const callerPhone = body.message?.call?.customer?.number
+  // Create conversation for this call
+  if (callId) {
+    await getOrCreateCallConversation(supabase, tenantId, callId, callerNumber)
+  }
+
+  // Build context
+  const context = await buildBusinessContext(supabase, tenantId)
+  const contextBlock = formatContextForPrompt(context)
+
+  // Detect owner vs customer
   const assistantId = body.message?.call?.assistantId
-  const ownerCall = await isOwnerCall(supabase, tenantId, callerPhone, assistantId)
+  const ownerCall = await isOwnerCall(supabase, tenantId, callerNumber, assistantId)
   const mode = ownerCall ? 'owner' : 'customer'
 
-  // Get transcript/content
-  const content = body.message?.functionCall?.parameters?.userMessage as string
-    || body.message?.transcript
-    || ''
-
-  if (!content) {
-    return NextResponse.json({})
-  }
-
-  // Normalize the message
-  const normalized = await normalizeIncomingMessage('voice', body.message, tenantId)
-
-  // Save user message
-  await supabase.from('messages').insert({
-    conversation_id: normalized.conversationId,
-    tenant_id: tenantId,
-    role: 'user',
-    content,
-    metadata: { channel: 'voice', callId: body.message?.call?.id, mode },
-  })
-
-  // Build context and get conversation history
-  const context = await buildBusinessContext(supabase, tenantId)
-
-  // Build client context for personalized responses
-  const clientContext = normalized.clientId
-    ? await buildClientContext(supabase, tenantId, normalized.clientId)
-    : null
-
-  const { data: prevMessages } = await supabase
-    .from('messages')
-    .select('role, content')
-    .eq('conversation_id', normalized.conversationId)
-    .order('created_at', { ascending: true })
-    .limit(20)
-
-  const messages: ModelMessage[] = (prevMessages || []).map((m: any) => ({
-    role: m.role === 'assistant' ? 'assistant' : 'user',
-    content: m.content,
-  })) as ModelMessage[]
-
-  // Run agent (sync mode - voice needs immediate response)
-  // Owner mode gets full tool access (schedule, clients, invoices, etc.)
-  const response = await runAgentSync(messages, {
-    tenantId,
-    conversationId: normalized.conversationId,
+  const systemPrompt = buildSystemPrompt({
+    businessName: context.businessName,
+    industry: context.industry,
+    description: context.description,
+    tone: context.tone,
+    customInstructions: context.customInstructions,
     mode,
-    context,
-    supabase,
-    clientId: normalized.clientId || undefined,
-    clientContext,
   })
 
-  // Save assistant response
-  await supabase.from('messages').insert({
-    conversation_id: normalized.conversationId,
-    tenant_id: tenantId,
-    role: 'assistant',
-    content: response,
-    metadata: { channel: 'voice', callId: body.message?.call?.id, mode },
-  })
+  const toolDefs = ownerCall ? getVapiOwnerToolDefs() : getVapiCustomerToolDefs()
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
+  const serverFields = buildVapiServerFields(`${appUrl}/api/voice/respond`)
 
-  const vapiResponse: VapiServerResponse = {
-    messageResponse: {
-      assistantMessage: {
-        role: 'assistant',
-        content: response,
+  return NextResponse.json({
+    assistant: {
+      name: `${context.businessName} Assistant`,
+      firstMessage: `Hi! Thanks for calling ${context.businessName}. How can I help you today?`,
+      model: {
+        provider: 'anthropic',
+        model: 'claude-sonnet-4-20250514',
+        messages: [
+          { role: 'system', content: `${systemPrompt}\n\n--- Business Information ---\n${contextBlock}` },
+        ],
+        tools: toolDefs,
       },
+      voice: { provider: 'vapi', voiceId: 'Elliot' },
+      ...serverFields,
+      transcriber: { provider: 'deepgram', model: 'nova-3', language: 'en' },
     },
+  })
+}
+
+// ── status-update ──────────────────────────────────────────────────────
+// Create conversation when call goes "in-progress" (fallback for non-assistant-request mode)
+
+async function handleStatusUpdate(body: VapiServerMessage): Promise<NextResponse> {
+  const status = body.message?.status
+  const callId = body.message?.call?.id
+
+  if (status === 'in-progress' && callId) {
+    const supabase = createAdminClient()
+    const tenantId = await resolveTenantFromChannel('voice', body.message)
+    if (tenantId) {
+      const callerNumber = body.message?.call?.customer?.number
+      await getOrCreateCallConversation(supabase, tenantId, callId, callerNumber)
+    }
   }
 
-  return NextResponse.json(vapiResponse)
+  return NextResponse.json({})
 }
+
+// ── tool-calls ─────────────────────────────────────────────────────────
+// Vapi intercepts AI tool calls and sends them here for execution.
 
 async function handleToolCalls(body: VapiServerMessage): Promise<NextResponse> {
   const supabase = createAdminClient()
   const toolCalls = body.message?.toolCallList || []
+  const callId = body.message?.call?.id
+  const callerNumber = body.message?.call?.customer?.number
 
   const tenantId = await resolveTenantFromChannel('voice', body.message)
   if (!tenantId) {
     const results = toolCalls.map((tc) => ({
       toolCallId: tc.id,
-      result: JSON.stringify({ error: 'Could not resolve tenant' }),
+      result: JSON.stringify({ error: 'Could not resolve tenant for this phone number' }),
     }))
-    return NextResponse.json({ messageResponse: { toolResults: results } })
+    return NextResponse.json({ results })
   }
 
-  // Build context and get tools
-  const context = await buildBusinessContext(supabase, tenantId)
+  // Find or create conversation
+  let conversationId = ''
+  let clientId: string | undefined
+  if (callId) {
+    const conv = await getOrCreateCallConversation(supabase, tenantId, callId, callerNumber)
+    conversationId = conv.conversationId
+    clientId = conv.clientId || undefined
+  }
 
-  // Detect owner vs customer to determine available tools
-  const callerPhone = body.message?.call?.customer?.number
+  // Build context and detect mode
+  const context = await buildBusinessContext(supabase, tenantId)
   const assistantId = body.message?.call?.assistantId
-  const ownerCall = await isOwnerCall(supabase, tenantId, callerPhone, assistantId)
+  const ownerCall = await isOwnerCall(supabase, tenantId, callerNumber, assistantId)
 
   const { getCustomerTools, getOwnerTools } = await import('@/lib/ai/tools')
   const tools = ownerCall
-    ? getOwnerTools(context, supabase, tenantId)
-    : getCustomerTools(context, supabase, tenantId)
+    ? getOwnerTools(context, supabase, tenantId, conversationId)
+    : getCustomerTools(context, supabase, tenantId, conversationId, clientId, true)
 
   // Execute each tool call
   const results = await Promise.all(
@@ -229,7 +428,10 @@ async function handleToolCalls(body: VapiServerMessage): Promise<NextResponse> {
       const fnName = tc.function?.name
       let args: Record<string, unknown> = {}
       try {
-        args = tc.function?.arguments ? JSON.parse(tc.function.arguments) : {}
+        const rawArgs = tc.function?.arguments
+        args = rawArgs
+          ? (typeof rawArgs === 'string' ? JSON.parse(rawArgs) : rawArgs)
+          : {}
       } catch {
         // arguments may already be parsed or empty
       }
@@ -244,6 +446,18 @@ async function handleToolCalls(body: VapiServerMessage): Promise<NextResponse> {
 
       try {
         const output = await toolDef.execute(args)
+
+        // Log to audit
+        await supabase.from('ai_audit_log').insert({
+          tenant_id: tenantId,
+          conversation_id: conversationId || null,
+          event_type: 'tool_call',
+          tool_name: fnName,
+          tool_input: args,
+          tool_output: output,
+          model_used: 'claude-sonnet-4-20250514',
+        }).then(() => {}, (err) => console.error('Audit log error:', err))
+
         return {
           toolCallId: tc.id,
           result: JSON.stringify(output),
@@ -258,21 +472,107 @@ async function handleToolCalls(body: VapiServerMessage): Promise<NextResponse> {
     })
   )
 
-  return NextResponse.json({ messageResponse: { toolResults: results } })
+  // Vapi expects { results: [...] } for tool-calls responses
+  return NextResponse.json({ results })
 }
 
-/**
- * Handle transfer-destination-request: a squad member wants to hand off to another agent.
- * Vapi sends the destination assistant name; we return its config.
- */
+// ── end-of-call-report ─────────────────────────────────────────────────
+// Save the full transcript, summary, and recording to the conversation.
+
+async function handleEndOfCall(body: VapiServerMessage) {
+  const supabase = createAdminClient()
+  const callId = body.message?.call?.id
+  if (!callId) return
+
+  const tenantId = await resolveTenantFromChannel('voice', body.message)
+  if (!tenantId) return
+
+  const callerNumber = body.message?.call?.customer?.number
+
+  // Find or create the conversation
+  const { conversationId } = await getOrCreateCallConversation(
+    supabase, tenantId, callId, callerNumber
+  )
+  if (!conversationId) return
+
+  // Extract data from the end-of-call report
+  const artifactMessages = body.message?.artifact?.messages || body.message?.messages || []
+  const transcript = artifactMessages
+    .filter((m) => m.role === 'user' || m.role === 'assistant' || m.role === 'bot')
+    .map((m) => `${m.role === 'user' ? 'Customer' : 'AI'}: ${m.message}`)
+    .join('\n')
+
+  const recordingUrl = body.message?.artifact?.recordingUrl || body.message?.recordingUrl
+  const stereoRecordingUrl = body.message?.artifact?.stereoRecordingUrl
+  const summary = body.message?.summary
+  const endedReason = body.message?.endedReason
+  const durationSeconds = body.message?.durationSeconds
+
+  // Calculate duration from timestamps if not provided
+  let duration = durationSeconds
+  if (!duration && body.message?.call?.createdAt && body.message?.call?.endedAt) {
+    duration = Math.round(
+      (new Date(body.message.call.endedAt).getTime() -
+        new Date(body.message.call.createdAt).getTime()) / 1000
+    )
+  }
+
+  // Save individual messages from the transcript for the conversation view
+  const messageInserts = artifactMessages
+    .filter((m) => m.role === 'user' || m.role === 'assistant' || m.role === 'bot')
+    .map((m) => ({
+      conversation_id: conversationId,
+      tenant_id: tenantId,
+      role: m.role === 'user' ? 'user' : 'assistant',
+      content: m.message,
+      metadata: {
+        channel: 'voice',
+        callId,
+        secondsFromStart: m.secondsFromStart,
+      },
+    }))
+
+  if (messageInserts.length > 0) {
+    // Check if messages already exist for this call (avoid duplicates)
+    const { count } = await supabase
+      .from('messages')
+      .select('id', { count: 'exact', head: true })
+      .eq('conversation_id', conversationId)
+
+    // Only insert if no messages exist yet (or very few from tool-call logging)
+    if ((count || 0) < 2) {
+      await supabase.from('messages').insert(messageInserts)
+    }
+  }
+
+  // Update conversation with call metadata
+  await supabase
+    .from('conversations')
+    .update({
+      status: 'resolved',
+      ended_at: new Date().toISOString(),
+      metadata: {
+        callId,
+        callerNumber,
+        endedReason,
+        summary,
+        transcript,
+        recordingUrl,
+        stereoRecordingUrl,
+        durationSeconds: duration,
+      },
+    })
+    .eq('id', conversationId)
+}
+
+// ── transfer-destination-request ───────────────────────────────────────
+
 async function handleTransferDestination(body: VapiServerMessage): Promise<NextResponse> {
   const supabase = createAdminClient()
 
   const tenantId = await resolveTenantFromChannel('voice', body.message)
   if (!tenantId) {
-    return NextResponse.json({
-      error: 'Could not resolve tenant for transfer',
-    })
+    return NextResponse.json({ error: 'Could not resolve tenant for transfer' })
   }
 
   const destination = body.message?.destination
@@ -287,7 +587,6 @@ async function handleTransferDestination(body: VapiServerMessage): Promise<NextR
     return NextResponse.json({})
   }
 
-  // Build full business context for the transfer destination
   const context = await buildBusinessContext(supabase, tenantId)
   const contextBlock = formatContextForPrompt(context)
   const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
@@ -312,6 +611,7 @@ ${contextBlock}`
           provider: 'anthropic',
           model: 'claude-sonnet-4-20250514',
           messages: [{ role: 'system', content: systemPrompt }],
+          tools: getVapiCustomerToolDefs(),
         },
         voice: { provider: 'vapi', voiceId: 'Elliot' },
         ...serverFields,
@@ -320,133 +620,4 @@ ${contextBlock}`
       transferMode: 'rolling-history',
     },
   })
-}
-
-/**
- * Handle assistant-request: Vapi asks which assistant to use for this call.
- * Returns the Greeter (first squad member) so the call starts there.
- */
-async function handleAssistantRequest(body: VapiServerMessage): Promise<NextResponse> {
-  const supabase = createAdminClient()
-
-  const tenantId = await resolveTenantFromChannel('voice', body.message)
-  if (!tenantId) {
-    return NextResponse.json({
-      assistant: {
-        name: 'Default Assistant',
-        firstMessage: 'Hello! How can I help you today?',
-        model: {
-          provider: 'openai',
-          model: 'gpt-4o-mini',
-          messages: [
-            { role: 'system', content: 'You are a helpful business assistant. This number is not configured yet.' },
-          ],
-        },
-        voice: { provider: '11labs', voiceId: 'bIHbv24MWmeRgasZH58o' },
-      },
-    })
-  }
-
-  // Build full business context for this tenant
-  const context = await buildBusinessContext(supabase, tenantId)
-  const contextBlock = formatContextForPrompt(context)
-
-  const systemPrompt = `You are the AI phone assistant for ${context.businessName}${context.industry ? `, a ${context.industry} business` : ''}.
-${context.description ? `\nAbout the business: ${context.description}` : ''}
-
-You are answering a phone call on behalf of the business. Be warm, helpful, and concise — this is a voice conversation so keep responses short and natural.
-
-Your role:
-- Answer questions about services, pricing, and availability
-- Provide business hours and location information
-- Help with frequently asked questions
-- Guide callers toward booking or contacting the business
-
-${context.tone === 'casual' ? 'Be relaxed and informal.' : context.tone === 'professional' ? 'Maintain a professional tone.' : context.tone === 'formal' ? 'Use formal, respectful language.' : 'Be warm, approachable, and conversational.'}
-
-Important:
-- Only share information you have been provided about the business
-- If you don\'t know something, say so and offer to take a message
-- Never make up pricing, availability, or service details
-- Keep responses concise — this is a phone call, not a text chat
-${context.customInstructions ? `\nAdditional instructions from the business owner:\n${context.customInstructions}` : ''}
-
---- Business Information ---
-${contextBlock}`
-
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
-  const serverFields = buildVapiServerFields(`${appUrl}/api/voice/respond`)
-
-  return NextResponse.json({
-    assistant: {
-      name: `${context.businessName} Assistant`,
-      firstMessage: `Hi! Thanks for calling ${context.businessName}. How can I help you today?`,
-      model: {
-        provider: 'anthropic',
-        model: 'claude-sonnet-4-20250514',
-        messages: [
-          { role: 'system', content: systemPrompt },
-        ],
-      },
-      voice: { provider: 'vapi', voiceId: 'Elliot' },
-      ...serverFields,
-      transcriber: { provider: 'deepgram', model: 'nova-3', language: 'en' },
-    },
-  })
-}
-
-async function handleEndOfCall(body: VapiServerMessage) {
-  const supabase = createAdminClient()
-  const callId = body.message?.call?.id
-  if (!callId) return
-
-  const tenantId = await resolveTenantFromChannel('voice', body.message)
-  if (!tenantId) return
-
-  // Extract transcript from artifact or messages
-  const artifactMessages = body.message?.artifact?.messages || body.message?.messages || []
-  const transcript = artifactMessages
-    .filter((m) => m.role === 'user' || m.role === 'assistant' || m.role === 'bot')
-    .map((m) => `${m.role === 'user' ? 'Customer' : 'AI'}: ${m.message}`)
-    .join('\n')
-
-  const recordingUrl = body.message?.artifact?.recordingUrl || body.message?.recordingUrl
-  const summary = body.message?.summary
-  const durationSeconds = body.message?.durationSeconds
-  const endedReason = body.message?.endedReason
-
-  // Calculate duration from call timestamps if not provided
-  let duration = durationSeconds
-  if (!duration && body.message?.call?.createdAt && body.message?.call?.endedAt) {
-    duration = Math.round(
-      (new Date(body.message.call.endedAt).getTime() - new Date(body.message.call.createdAt).getTime()) / 1000
-    )
-  }
-
-  // Find and close the conversation
-  const { data: conv } = await supabase
-    .from('conversations')
-    .select('id')
-    .eq('tenant_id', tenantId)
-    .eq('metadata->>callId', callId)
-    .single()
-
-  if (conv) {
-    await supabase
-      .from('conversations')
-      .update({
-        status: 'resolved',
-        ended_at: new Date().toISOString(),
-        metadata: {
-          callId,
-          endedReason,
-          summary,
-          transcript,
-          recordingUrl,
-          durationSeconds: duration,
-          callerNumber: body.message?.call?.customer?.number,
-        },
-      })
-      .eq('id', conv.id)
-  }
 }

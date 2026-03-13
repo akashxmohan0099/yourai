@@ -51,7 +51,21 @@ export function createAppointmentTool(
         .ilike('name', `%${clientName}%`)
         .limit(1)
 
-      const clientId = clients?.[0]?.id
+      let clientId = clients?.[0]?.id
+
+      // Auto-create client if not found (common for first-time voice callers)
+      if (!clientId) {
+        const { data: newClient } = await supabase
+          .from('clients')
+          .insert({
+            tenant_id: tenantId,
+            name: clientName,
+            source_channel: 'ai',
+          })
+          .select('id')
+          .single()
+        clientId = newClient?.id
+      }
 
       // Find service by name
       let serviceId: string | undefined

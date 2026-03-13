@@ -82,41 +82,25 @@ export async function POST(request: NextRequest) {
       updates.vapi_owner_assistant_id = ownerAssistantId || null
     }
 
-    // If phoneNumberId provided, assign it to the assistant via Vapi API
+    // If phoneNumberId provided, configure it in server-URL mode.
+    // We do NOT assign an assistantId to the phone number — instead, the phone
+    // uses our serverUrl and we return a dynamic assistant via assistant-request.
+    // This lets us inject fresh business context and tool definitions per call.
     if (phoneNumberId !== undefined) {
       if (phoneNumberId) {
-        // Get the current assistant ID (from the update or from the database)
-        let currentAssistantId = assistantId
-        if (!currentAssistantId) {
-          const { data: currentConfig } = await supabase
-            .from('business_config')
-            .select('vapi_assistant_id')
-            .eq('tenant_id', tenantId)
-            .single()
-          currentAssistantId = currentConfig?.vapi_assistant_id
-        }
-
-        if (!currentAssistantId) {
-          return NextResponse.json(
-            { error: 'Cannot assign phone number without an assistant ID configured.' },
-            { status: 400 }
-          )
-        }
-
         try {
-          await Promise.all([
-            vapi.assignPhoneToAssistant(phoneNumberId, currentAssistantId),
-            vapi.updateAssistant(currentAssistantId, {
-              server: voiceServer,
-              serverUrl: voiceServerUrl,
-            }),
-            vapi.updatePhoneNumber(phoneNumberId, {
-              server: voiceServer,
-            }),
-          ])
-        } catch {
+          // Configure phone number for server-URL mode: remove assistantId,
+          // set serverUrl so Vapi sends assistant-request to our server.
+          await vapi.updatePhoneNumber(phoneNumberId, {
+            assistantId: null,
+            squadId: null,
+            serverUrl: voiceServerUrl,
+            server: voiceServer,
+          })
+        } catch (err) {
+          console.error('Failed to configure phone number:', err)
           return NextResponse.json(
-            { error: 'Failed to assign phone number to assistant on Vapi.' },
+            { error: 'Failed to configure phone number on Vapi.' },
             { status: 400 }
           )
         }
@@ -128,22 +112,18 @@ export async function POST(request: NextRequest) {
     if (voiceEnabled !== undefined) {
       updates.voice_enabled = voiceEnabled
     } else {
-      // Auto-determine voice_enabled: true when both assistant and phone are configured
-      const finalAssistantId = assistantId !== undefined ? assistantId : undefined
+      // Auto-determine: enabled when phone number is configured
       const finalPhoneId = phoneNumberId !== undefined ? phoneNumberId : undefined
 
-      if (finalAssistantId !== undefined || finalPhoneId !== undefined) {
-        // Fetch current config to merge with updates
+      if (finalPhoneId !== undefined) {
+        updates.voice_enabled = !!finalPhoneId
+      } else if (assistantId !== undefined) {
         const { data: currentConfig } = await supabase
           .from('business_config')
-          .select('vapi_assistant_id, vapi_phone_number_id')
+          .select('vapi_phone_number_id')
           .eq('tenant_id', tenantId)
           .single()
-
-        const resolvedAssistantId = finalAssistantId ?? currentConfig?.vapi_assistant_id
-        const resolvedPhoneId = finalPhoneId ?? currentConfig?.vapi_phone_number_id
-
-        updates.voice_enabled = !!(resolvedAssistantId && resolvedPhoneId)
+        updates.voice_enabled = !!(currentConfig?.vapi_phone_number_id)
       }
     }
 
