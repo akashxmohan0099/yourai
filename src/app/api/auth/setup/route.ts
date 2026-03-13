@@ -20,16 +20,6 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Debug: check env vars are present
-    const hasUrl = !!process.env.NEXT_PUBLIC_SUPABASE_URL
-    const hasServiceKey = !!process.env.SUPABASE_SERVICE_ROLE_KEY
-    if (!hasUrl || !hasServiceKey) {
-      return NextResponse.json(
-        { error: 'Missing env vars', hasUrl, hasServiceKey },
-        { status: 500 }
-      )
-    }
-
     const supabase = createAdminClient()
     const baseSlug = generateSlug(businessName)
 
