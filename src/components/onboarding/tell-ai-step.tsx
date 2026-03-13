@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef, useEffect, useCallback } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { Send, Loader2, ArrowRight, Clock, HelpCircle, MessageCircle, Briefcase } from 'lucide-react'
 import type { BusinessTypeTemplate } from '@/lib/onboarding/business-type-templates'
@@ -31,6 +31,7 @@ export function TellAiStep({ tenantId, template, onNext, onBack }: TellAiStepPro
   const [input, setInput] = useState('')
   const [sending, setSending] = useState(false)
   const [saving, setSaving] = useState(false)
+  const [initialized, setInitialized] = useState(false)
   const [extracted, setExtracted] = useState<ExtractedData>({
     services: [],
     hours: {},
@@ -42,8 +43,11 @@ export function TellAiStep({ tenantId, template, onNext, onBack }: TellAiStepPro
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const supabase = createClient()
 
-  // Load template defaults
+  // Load template defaults — only on first mount
   useEffect(() => {
+    if (initialized) return
+    setInitialized(true)
+
     if (template) {
       setExtracted((prev) => ({
         ...prev,
@@ -58,29 +62,55 @@ export function TellAiStep({ tenantId, template, onNext, onBack }: TellAiStepPro
         tone: template.suggestedTone,
       }))
 
-      // Initial AI message
       setMessages([{
         role: 'assistant',
-        content: `G'day! I've loaded the standard ${template.label} template with ${template.services.length} services, business hours, and common FAQs.\n\nNow tell me about YOUR specific business — what makes you different? For example:\n\n• What services do you actually offer? (I can add, remove, or adjust the template ones)\n• What are your real prices?\n• What hours do you work?\n• Any rules I should know? (like "never offer discounts" or "always ask for their name")\n• Anything special about your business?\n\nJust chat naturally — I'll pick up the details as we go.`
+        content: `G'day! I've loaded the standard ${template.label} template with ${template.services.length} services, business hours, and common FAQs.\n\nNow tell me about YOUR specific business — what makes you different? For example:\n\n\u2022 What services do you actually offer? (I can add, remove, or adjust the template ones)\n\u2022 What are your real prices?\n\u2022 What hours do you work?\n\u2022 Any rules I should know? (like "never offer discounts" or "always ask for their name")\n\u2022 Anything special about your business?\n\nJust chat naturally \u2014 I'll pick up the details as we go.`
       }])
     } else {
       setMessages([{
         role: 'assistant',
-        content: `G'day! I'm going to be your business's AI assistant. Tell me about your business so I can help your customers.\n\nWhat do you do? What services do you offer and roughly what do you charge? What hours do you work?\n\nJust chat naturally — I'll pick up the details as we go.`
+        content: `G'day! I'm going to be your business's AI assistant. Tell me about your business so I can help your customers.\n\nWhat do you do? What services do you offer and roughly what do you charge? What hours do you work?\n\nJust chat naturally \u2014 I'll pick up the details as we go.`
       }])
     }
-  }, [template])
+  }, [template, initialized])
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages])
+
+  const mergeExtracted = useCallback((newData: Record<string, unknown>) => {
+    setExtracted((prev) => {
+      const merged = { ...prev }
+
+      const newServices = newData.services as ExtractedData['services'] | undefined
+      if (newServices && newServices.length > 0) {
+        const existingNames = new Set(prev.services.map((s) => s.name.toLowerCase()))
+        const added = newServices.filter((s) => !existingNames.has(s.name.toLowerCase()))
+        merged.services = added.length > 0
+          ? [...prev.services, ...added]
+          : newServices
+      }
+
+      if (newData.hours) merged.hours = { ...prev.hours, ...(newData.hours as ExtractedData['hours']) }
+      const newFaqs = newData.faqs as ExtractedData['faqs'] | undefined
+      if (newFaqs && newFaqs.length > 0) merged.faqs = [...prev.faqs, ...newFaqs]
+      if (newData.tone) merged.tone = newData.tone as string
+      if (newData.customInstructions) merged.customInstructions = newData.customInstructions as string
+      if (newData.description) merged.description = newData.description as string
+
+      return merged
+    })
+  }, [])
 
   const sendMessage = async () => {
     if (!input.trim() || sending) return
 
     const userMessage = input.trim()
     setInput('')
-    setMessages((prev) => [...prev, { role: 'user', content: userMessage }])
+
+    const updatedMessages: ChatMessage[] = [...messages, { role: 'user', content: userMessage }]
+    // Add user message + empty assistant message for streaming
+    setMessages([...updatedMessages, { role: 'assistant', content: '' }])
     setSending(true)
 
     try {
@@ -89,22 +119,63 @@ export function TellAiStep({ tenantId, template, onNext, onBack }: TellAiStepPro
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           tenantId,
-          messages: [...messages, { role: 'user', content: userMessage }],
+          messages: updatedMessages,
           currentExtracted: extracted,
           templateId: template?.id,
         }),
       })
 
-      if (res.ok) {
-        const data = await res.json()
-        setMessages((prev) => [...prev, { role: 'assistant', content: data.reply }])
-        if (data.extracted) {
-          setExtracted((prev) => ({ ...prev, ...data.extracted }))
+      if (!res.ok) throw new Error('Request failed')
+
+      const reader = res.body?.getReader()
+      if (!reader) throw new Error('No stream')
+
+      const decoder = new TextDecoder()
+      let fullText = ''
+
+      while (true) {
+        const { done, value } = await reader.read()
+        if (done) break
+        const chunk = decoder.decode(value, { stream: true })
+        fullText += chunk
+
+        // Hide any partial <extracted> tag during streaming
+        const displayText = fullText.replace(/<extracted[\s\S]*$/, '').trim()
+        setMessages((prev) => {
+          const updated = [...prev]
+          updated[updated.length - 1] = { role: 'assistant', content: displayText }
+          return updated
+        })
+      }
+
+      // Parse <extracted> from complete response
+      const extractedMatch = fullText.match(/<extracted>([\s\S]*?)<\/extracted>/)
+      if (extractedMatch) {
+        try {
+          const parsed = JSON.parse(extractedMatch[1])
+          mergeExtracted(parsed)
+        } catch {
+          // ignore parse errors
         }
       }
+
+      // Clean final message
+      const cleanText = fullText.replace(/<extracted>[\s\S]*?<\/extracted>/, '').trim()
+      setMessages((prev) => {
+        const updated = [...prev]
+        updated[updated.length - 1] = { role: 'assistant', content: cleanText }
+        return updated
+      })
     } catch (error) {
       console.error('Chat error:', error)
-      setMessages((prev) => [...prev, { role: 'assistant', content: 'Sorry, I had a hiccup. Could you say that again?' }])
+      setMessages((prev) => {
+        const updated = [...prev]
+        updated[updated.length - 1] = {
+          role: 'assistant',
+          content: 'Sorry, I had a hiccup. Could you say that again?',
+        }
+        return updated
+      })
     }
 
     setSending(false)
@@ -166,24 +237,24 @@ export function TellAiStep({ tenantId, template, onNext, onBack }: TellAiStepPro
         <div className="lg:col-span-3 flex flex-col border border-[var(--line)] rounded-2xl overflow-hidden" style={{ height: '440px' }}>
           {/* Messages */}
           <div className="flex-1 overflow-y-auto p-4 space-y-3 bg-[var(--surface-muted)]/50">
-            {messages.map((msg, i) => (
-              <div key={i} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                <div className={`max-w-[85%] px-4 py-2.5 text-sm whitespace-pre-wrap leading-relaxed ${
-                  msg.role === 'user'
-                    ? 'bg-[var(--sidebar)] text-white rounded-2xl rounded-br-sm'
-                    : 'bg-[var(--surface)] border border-[var(--line)] text-[var(--ink)] rounded-2xl rounded-bl-sm'
-                }`}>
-                  {msg.content}
+            {messages.map((msg, i) => {
+              const isEmpty = msg.role === 'assistant' && msg.content === '' && sending && i === messages.length - 1
+              return (
+                <div key={i} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+                  <div className={`max-w-[85%] px-4 py-2.5 text-sm whitespace-pre-wrap leading-relaxed ${
+                    msg.role === 'user'
+                      ? 'bg-[var(--sidebar)] text-white rounded-2xl rounded-br-sm'
+                      : 'bg-[var(--surface)] border border-[var(--line)] text-[var(--ink)] rounded-2xl rounded-bl-sm'
+                  }`}>
+                    {isEmpty ? (
+                      <Loader2 className="w-4 h-4 animate-spin text-[var(--ink-faint)]" />
+                    ) : (
+                      msg.content
+                    )}
+                  </div>
                 </div>
-              </div>
-            ))}
-            {sending && (
-              <div className="flex justify-start">
-                <div className="bg-[var(--surface)] border border-[var(--line)] px-4 py-2.5 rounded-2xl rounded-bl-sm">
-                  <Loader2 className="w-4 h-4 animate-spin text-[var(--ink-faint)]" />
-                </div>
-              </div>
-            )}
+              )
+            })}
             <div ref={messagesEndRef} />
           </div>
 

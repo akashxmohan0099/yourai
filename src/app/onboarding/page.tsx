@@ -186,14 +186,17 @@ export default function OnboardingPage() {
                 onBack={handleBack}
               />
             ) : null}
-            {currentStep === 3 && tenantId ? (
-              <TellAiStep
-                tenantId={tenantId}
-                template={selectedTemplate}
-                onNext={handleNext}
-                onBack={handleBack}
-              />
-            ) : null}
+            {/* Keep TellAiStep mounted when on step 4 so chat state survives round-trips */}
+            <div style={{ display: currentStep === 3 ? undefined : 'none' }}>
+              {currentStep >= 3 && tenantId ? (
+                <TellAiStep
+                  tenantId={tenantId}
+                  template={selectedTemplate}
+                  onNext={handleNext}
+                  onBack={handleBack}
+                />
+              ) : null}
+            </div>
             {currentStep === 4 && tenantId ? (
               <SummaryStep
                 tenantId={tenantId}

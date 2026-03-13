@@ -1,6 +1,6 @@
-import { generateText } from 'ai'
+import { streamText } from 'ai'
 import { anthropic } from '@ai-sdk/anthropic'
-import { NextRequest, NextResponse } from 'next/server'
+import { NextRequest } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { getTemplateById } from '@/lib/onboarding/business-type-templates'
 
@@ -8,15 +8,13 @@ export const maxDuration = 30
 
 export async function POST(request: NextRequest) {
   try {
-    // Verify the user is authenticated
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+      return new Response('Unauthorized', { status: 401 })
     }
 
     const { tenantId, messages, currentExtracted, templateId } = await request.json()
-
     const template = templateId ? getTemplateById(templateId) : null
 
     const systemPrompt = `You are helping a business owner set up their AI assistant during onboarding. Your job is to have a natural conversation to learn about their business.
@@ -57,49 +55,15 @@ Keep your conversational reply SHORT (2-4 sentences). Be concise. Don't repeat i
       content: m.content,
     }))
 
-    const result = await generateText({
+    const result = streamText({
       model: anthropic('claude-sonnet-4-20250514'),
       system: systemPrompt,
       messages: conversationMessages,
     })
 
-    // Parse extracted data from response
-    let reply = result.text
-    let extracted: Record<string, any> = {}
-
-    const extractedMatch = reply.match(/<extracted>([\s\S]*?)<\/extracted>/)
-    if (extractedMatch) {
-      try {
-        extracted = JSON.parse(extractedMatch[1])
-      } catch (e) {
-        // ignore parse errors
-      }
-      // Remove the extracted tag from the visible reply
-      reply = reply.replace(/<extracted>[\s\S]*?<\/extracted>/, '').trim()
-    }
-
-    // Merge with current extracted - only update fields that are present in the new extraction
-    const mergedExtracted: Record<string, any> = {}
-    if (extracted.services && extracted.services.length > 0) {
-      // If AI sends services, merge with existing (add new ones, don't remove template ones unless explicitly asked)
-      const existingNames = new Set((currentExtracted.services || []).map((s: any) => s.name.toLowerCase()))
-      const newServices = extracted.services.filter((s: any) => !existingNames.has(s.name.toLowerCase()))
-      if (newServices.length > 0) {
-        mergedExtracted.services = [...(currentExtracted.services || []), ...newServices]
-      } else if (extracted.services.length > 0) {
-        // Full replacement if AI is explicitly updating
-        mergedExtracted.services = extracted.services
-      }
-    }
-    if (extracted.hours) mergedExtracted.hours = { ...(currentExtracted.hours || {}), ...extracted.hours }
-    if (extracted.faqs && extracted.faqs.length > 0) mergedExtracted.faqs = [...(currentExtracted.faqs || []), ...extracted.faqs]
-    if (extracted.tone) mergedExtracted.tone = extracted.tone
-    if (extracted.customInstructions) mergedExtracted.customInstructions = extracted.customInstructions
-    if (extracted.description) mergedExtracted.description = extracted.description
-
-    return NextResponse.json({ reply, extracted: mergedExtracted })
+    return result.toTextStreamResponse()
   } catch (error) {
     console.error('Onboarding chat error:', error)
-    return NextResponse.json({ reply: "Sorry, I had a hiccup. Could you say that again?", extracted: {} })
+    return new Response('Sorry, I had a hiccup. Could you say that again?', { status: 500 })
   }
 }
