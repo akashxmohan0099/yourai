@@ -1,4 +1,5 @@
 import { createAdminClient } from '@/lib/supabase/admin'
+import { createClient } from '@/lib/supabase/server'
 import { NextRequest, NextResponse } from 'next/server'
 
 function generateSlug(name: string): string {
@@ -11,16 +12,42 @@ function generateSlug(name: string): string {
 
 export async function POST(request: NextRequest) {
   try {
-    const { userId, businessName, email } = await request.json()
+    const { businessName } = await request.json()
 
-    if (!userId || !businessName) {
+    if (!businessName) {
       return NextResponse.json(
         { error: 'Missing required fields' },
         { status: 400 }
       )
     }
 
-    const supabase = createAdminClient()
+    // Verify the caller's session — use their actual auth identity, not client input
+    const userSupabase = await createClient()
+    const { data: { user }, error: authError } = await userSupabase.auth.getUser()
+    if (authError || !user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    const userId = user.id
+    const email = user.email || ''
+
+    // Prevent duplicate tenant creation for the same user
+    const adminSupabase = createAdminClient()
+    const { data: existingProfile } = await adminSupabase
+      .from('user_profiles')
+      .select('id')
+      .eq('auth_user_id', userId)
+      .limit(1)
+      .single()
+
+    if (existingProfile) {
+      return NextResponse.json(
+        { error: 'Account already set up' },
+        { status: 409 }
+      )
+    }
+
+    const supabase = adminSupabase
     const baseSlug = generateSlug(businessName)
 
     // Ensure unique slug

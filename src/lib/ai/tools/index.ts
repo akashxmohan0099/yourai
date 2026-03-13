@@ -1,4 +1,5 @@
 import { BusinessContext } from '../context-builder'
+import { checkPermission } from '../permission-gate'
 import { getServicesTool } from './get-services'
 import { getPricingTool } from './get-pricing'
 import { getHoursTool } from './get-hours'
@@ -16,6 +17,56 @@ import { createInvoiceTool } from './create-invoice'
 import { checkPaymentTool } from './check-payment'
 import { SupabaseClient } from '@supabase/supabase-js'
 
+/**
+ * Wraps a tool's execute function with the permission gate.
+ * If the gate returns allowed: false, the tool returns an error message
+ * instead of executing. This enforces hard boundaries and approval requirements
+ * BEFORE the tool runs, not after.
+ */
+function withPermissionGate(
+  toolName: string,
+  toolDef: any,
+  rules: BusinessContext['rules']
+): any {
+  const originalExecute = toolDef.execute
+  if (!originalExecute) return toolDef
+
+  return {
+    ...toolDef,
+    execute: async (args: Record<string, unknown>) => {
+      const permission = checkPermission(toolName, args, rules)
+      if (!permission.allowed) {
+        if (permission.requiresApproval) {
+          return {
+            error: true,
+            message: `This action requires owner approval: ${permission.reason}`,
+            requiresApproval: true,
+          }
+        }
+        return {
+          error: true,
+          message: `Action blocked by business rule: ${permission.reason}`,
+        }
+      }
+      return originalExecute(args)
+    },
+  }
+}
+
+/**
+ * Apply permission gate to all tools in a map.
+ */
+function gateTools(
+  tools: Record<string, any>,
+  rules: BusinessContext['rules']
+): Record<string, any> {
+  const gated: Record<string, any> = {}
+  for (const [name, def] of Object.entries(tools)) {
+    gated[name] = withPermissionGate(name, def, rules)
+  }
+  return gated
+}
+
 export function getCustomerTools(
   context: BusinessContext,
   supabase?: SupabaseClient,
@@ -23,6 +74,7 @@ export function getCustomerTools(
   conversationId?: string,
   clientId?: string
 ) {
+  // Customer tools: read-only by default, booking only when supabase is available
   const tools: Record<string, any> = {
     getServices: getServicesTool(context),
     getPricing: getPricingTool(context),
@@ -33,15 +85,13 @@ export function getCustomerTools(
 
   if (supabase && tenantId) {
     tools.createAppointment = createAppointmentTool(context, supabase, tenantId)
-    tools.rescheduleAppointment = rescheduleAppointmentTool(supabase, tenantId)
-    tools.cancelAppointment = cancelAppointmentTool(supabase, tenantId)
   }
 
   if (supabase && tenantId && conversationId) {
     tools.requestApproval = requestApprovalTool(supabase, tenantId, conversationId, clientId)
   }
 
-  return tools
+  return gateTools(tools, context.rules)
 }
 
 export function getOwnerTools(
@@ -69,5 +119,5 @@ export function getOwnerTools(
     tools.requestApproval = requestApprovalTool(supabase, tenantId, conversationId)
   }
 
-  return tools
+  return gateTools(tools, context.rules)
 }

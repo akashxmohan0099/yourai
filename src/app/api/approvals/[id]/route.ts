@@ -1,4 +1,5 @@
 import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/admin'
 import { resolveApproval } from '@/lib/approvals/engine'
 import { NextRequest, NextResponse } from 'next/server'
 
@@ -22,8 +23,31 @@ export async function PATCH(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
+    // Verify user has owner or admin role — staff/viewer cannot resolve approvals
+    const adminSupabase = createAdminClient()
+    const { data: profile } = await adminSupabase
+      .from('user_profiles')
+      .select('role, tenant_id')
+      .eq('auth_user_id', user.id)
+      .single()
+
+    if (!profile || !['owner', 'admin'].includes(profile.role)) {
+      return NextResponse.json({ error: 'Forbidden: owner or admin role required' }, { status: 403 })
+    }
+
+    // Verify the approval belongs to the user's tenant
+    const { data: approval } = await adminSupabase
+      .from('approvals')
+      .select('tenant_id')
+      .eq('id', id)
+      .single()
+
+    if (!approval || approval.tenant_id !== profile.tenant_id) {
+      return NextResponse.json({ error: 'Approval not found' }, { status: 404 })
+    }
+
     const success = await resolveApproval(
-      supabase,
+      adminSupabase,
       id,
       decision,
       user.id,

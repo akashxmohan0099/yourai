@@ -43,14 +43,11 @@ export default function SignupPage() {
       }
 
       // Create tenant and profile via server action
+      // Server derives userId/email from the authenticated session — never trust client input
       const res = await fetch('/api/auth/setup', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          userId: data.user.id,
-          businessName,
-          email,
-        }),
+        body: JSON.stringify({ businessName }),
       })
 
       if (!res.ok) {

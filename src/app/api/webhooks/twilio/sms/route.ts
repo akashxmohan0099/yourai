@@ -15,17 +15,17 @@ export async function POST(request: NextRequest) {
       body[key] = value.toString()
     })
 
-    // Validate Twilio signature in production
-    if (process.env.NODE_ENV === 'production') {
-      const signature = request.headers.get('x-twilio-signature')
-      if (signature) {
-        const requestUrl = request.url
-        const valid = await validateTwilioSignature(requestUrl, body, signature)
-        if (!valid) {
-          console.warn('Invalid Twilio signature on SMS webhook')
-          return new NextResponse('Forbidden', { status: 403 })
-        }
-      }
+    // Always validate Twilio signature — reject unsigned or forged requests
+    const signature = request.headers.get('x-twilio-signature')
+    if (!signature) {
+      console.warn('SMS webhook called without x-twilio-signature header')
+      return new NextResponse('Forbidden', { status: 403 })
+    }
+    const requestUrl = request.url
+    const valid = await validateTwilioSignature(requestUrl, body, signature)
+    if (!valid) {
+      console.warn('Invalid Twilio signature on SMS webhook')
+      return new NextResponse('Forbidden', { status: 403 })
     }
 
     const from = body.From

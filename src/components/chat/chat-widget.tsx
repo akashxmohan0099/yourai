@@ -8,12 +8,12 @@ import { cn } from '@/lib/utils'
 import { DefaultChatTransport } from 'ai'
 
 interface ChatWidgetProps {
-  tenantId: string
+  tenantSlug: string
   businessName: string
   embedded?: boolean
 }
 
-export function ChatWidget({ tenantId, businessName, embedded = false }: ChatWidgetProps) {
+export function ChatWidget({ tenantSlug, businessName, embedded = false }: ChatWidgetProps) {
   const [isOpen, setIsOpen] = useState(embedded)
   const [input, setInput] = useState('')
   const messagesEndRef = useRef<HTMLDivElement>(null)
@@ -21,7 +21,7 @@ export function ChatWidget({ tenantId, businessName, embedded = false }: ChatWid
   const { messages, sendMessage, status } = useChat({
     transport: new DefaultChatTransport({
       api: '/api/chat',
-      body: { tenantId },
+      body: { tenantSlug },
     }),
   })
 

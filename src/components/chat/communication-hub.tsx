@@ -7,6 +7,7 @@ import { VoiceWidget } from './voice-widget'
 import { cn } from '@/lib/utils'
 
 interface CommunicationHubProps {
+  tenantSlug: string
   tenantId: string
   businessName: string
   voiceEnabled: boolean
@@ -15,6 +16,7 @@ interface CommunicationHubProps {
 }
 
 export function CommunicationHub({
+  tenantSlug,
   tenantId,
   businessName,
   voiceEnabled,
@@ -26,7 +28,7 @@ export function CommunicationHub({
 
   // If voice is not available, just render the chat widget directly
   if (!showVoice) {
-    return <ChatWidget tenantId={tenantId} businessName={businessName} embedded={embedded} />
+    return <ChatWidget tenantSlug={tenantSlug} businessName={businessName} embedded={embedded} />
   }
 
   if (embedded) {
@@ -63,7 +65,7 @@ export function CommunicationHub({
         {/* Content */}
         <div className="flex-1 min-h-0">
           {activeTab === 'chat' ? (
-            <ChatWidget tenantId={tenantId} businessName={businessName} embedded />
+            <ChatWidget tenantSlug={tenantSlug} businessName={businessName} embedded />
           ) : (
             <EmbeddedVoicePanel
               tenantId={tenantId}
@@ -80,7 +82,7 @@ export function CommunicationHub({
   // Show chat widget as main + voice button as secondary FAB
   return (
     <>
-      <ChatWidget tenantId={tenantId} businessName={businessName} />
+      <ChatWidget tenantSlug={tenantSlug} businessName={businessName} />
       <VoiceWidget
         tenantId={tenantId}
         assistantId={assistantId}

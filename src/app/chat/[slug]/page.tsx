@@ -25,6 +25,7 @@ export default async function ChatPage({ params }: ChatPageProps) {
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#f5f5f7] to-white">
       <CommunicationHub
+        tenantSlug={slug}
         tenantId={tenant.id}
         businessName={config?.business_name || tenant.name}
         voiceEnabled={config?.voice_enabled || false}

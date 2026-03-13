@@ -1,36 +1,53 @@
 import { createAdminClient } from '@/lib/supabase/admin'
 import { buildBusinessContext, buildClientContext } from '@/lib/ai/context-builder'
 import { runAgentStream } from '@/lib/ai/agent'
-import { type ModelMessage, convertToModelMessages, createUIMessageStreamResponse } from 'ai'
+import { type ModelMessage, convertToModelMessages } from 'ai'
 
 export const maxDuration = 30
 
 export async function POST(request: Request) {
   try {
-    const { messages, tenantId, conversationId } = await request.json()
+    const { messages, tenantSlug, conversationId } = await request.json()
 
-    if (!tenantId) {
-      return new Response('Missing tenantId', { status: 400 })
+    if (!tenantSlug || typeof tenantSlug !== 'string') {
+      return new Response('Missing tenantSlug', { status: 400 })
     }
 
     const supabase = createAdminClient()
 
-    // Verify tenant exists and is active
+    // Resolve tenant from slug — never trust a raw UUID from the client
     const { data: tenant } = await supabase
       .from('tenants')
       .select('id, status')
-      .eq('id', tenantId)
+      .eq('slug', tenantSlug)
+      .eq('status', 'active')
       .single()
 
-    if (!tenant || tenant.status !== 'active') {
+    if (!tenant) {
       return new Response('Business not found or inactive', { status: 404 })
     }
+
+    const tenantId = tenant.id
 
     // Build business context
     const context = await buildBusinessContext(supabase, tenantId)
 
     // Ensure conversation exists
     let convId = conversationId
+    if (convId) {
+      // Verify the conversation belongs to this tenant (prevent cross-tenant injection)
+      const { data: existingConv } = await supabase
+        .from('conversations')
+        .select('id')
+        .eq('id', convId)
+        .eq('tenant_id', tenantId)
+        .single()
+
+      if (!existingConv) {
+        convId = null // Invalid conversation ID, create a new one
+      }
+    }
+
     if (!convId) {
       const { data: conv } = await supabase
         .from('conversations')
@@ -89,7 +106,7 @@ export async function POST(request: Request) {
     // Convert UI messages to model messages
     const modelMessages = await convertToModelMessages(messages)
 
-    // Run agent
+    // Run agent — no supabase/tenantId passed to tools so customer mode is read-only
     const result = await runAgentStream(
       modelMessages,
       {

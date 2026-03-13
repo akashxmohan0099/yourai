@@ -3,7 +3,6 @@ import { anthropic } from '@ai-sdk/anthropic'
 import { buildSystemPrompt } from './prompts/system'
 import { BusinessContext, ClientContext, formatContextForPrompt, formatClientContextForPrompt } from './context-builder'
 import { getCustomerTools, getOwnerTools } from './tools'
-import { checkPermission } from './permission-gate'
 import { SupabaseClient } from '@supabase/supabase-js'
 
 export interface AgentConfig {
@@ -48,21 +47,16 @@ export async function runAgentStream(
     tools,
     stopWhen: stepCountIs(5),
     onStepFinish: async (step) => {
+      // Permission gate is enforced inside each tool's execute wrapper (tools/index.ts).
+      // This callback only logs tool calls for audit purposes.
       if (step.toolCalls && step.toolCalls.length > 0) {
         for (const toolCall of step.toolCalls) {
-          const permission = checkPermission(
-            toolCall.toolName,
-            (toolCall as any).input as Record<string, unknown>,
-            config.context.rules
-          )
-
           await logAuditEvent(config.supabase, {
             tenantId: config.tenantId,
             conversationId: config.conversationId,
             eventType: 'tool_call',
             toolName: toolCall.toolName,
             toolInput: (toolCall as any).input,
-            permissionResult: permission.allowed ? 'allowed' : 'denied',
             modelUsed: 'claude-sonnet-4-20250514',
           })
         }
