@@ -1,5 +1,6 @@
 import { createAdminClient } from '@/lib/supabase/admin'
 import { processInboundEmail } from '@/lib/background/process-email'
+import { verifyNylasWebhookRequest } from '@/lib/nylas/webhook-validator'
 
 export async function GET(request: Request) {
   const url = new URL(request.url)
@@ -12,7 +13,12 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   try {
-    const payload = await request.json()
+    const verification = await verifyNylasWebhookRequest(request)
+    if (!verification.ok) {
+      return verification.response
+    }
+
+    const payload = JSON.parse(verification.body)
     const supabase = createAdminClient()
 
     for (const delta of payload.deltas || [payload]) {

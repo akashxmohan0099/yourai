@@ -1,6 +1,27 @@
+import { PageIntro } from '@/components/dashboard/page-intro'
 import { requireTenant } from '@/lib/auth/guards'
 import { createClient } from '@/lib/supabase/server'
-import { MessageSquare, Users, Clock, Calendar, CheckCircle, UserPlus } from 'lucide-react'
+import {
+  ArrowRight,
+  Calendar,
+  CheckCircle,
+  Clock,
+  MessageSquare,
+  UserPlus,
+} from 'lucide-react'
+import Link from 'next/link'
+
+interface RecentMessage {
+  content?: string | null
+}
+
+interface RecentConversation {
+  id: string
+  status: string
+  channel?: string | null
+  clients?: { name?: string | null } | null
+  messages?: RecentMessage[] | null
+}
 
 export default async function DashboardPage() {
   const { tenantId, tenant } = await requireTenant()
@@ -11,171 +32,228 @@ export default async function DashboardPage() {
   const hour = today.getHours()
   const greeting = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening'
 
-  // Fetch stats
-  const [conversationsResult, clientsResult, recentConversations, todayAppointments, pendingApprovalsResult] = await Promise.all([
-    supabase
-      .from('conversations')
-      .select('id', { count: 'exact', head: true })
-      .eq('tenant_id', tenantId),
-    supabase
-      .from('clients')
-      .select('id', { count: 'exact', head: true })
-      .eq('tenant_id', tenantId),
-    supabase
-      .from('conversations')
-      .select('*, clients(name), messages(content, role, created_at)')
-      .eq('tenant_id', tenantId)
-      .order('created_at', { ascending: false })
-      .limit(5),
-    supabase
-      .from('appointments')
-      .select('id', { count: 'exact', head: true })
-      .eq('tenant_id', tenantId)
-      .neq('status', 'cancelled')
-      .gte('starts_at', `${todayStr}T00:00:00`)
-      .lte('starts_at', `${todayStr}T23:59:59`),
-    supabase
-      .from('approvals')
-      .select('id', { count: 'exact', head: true })
-      .eq('tenant_id', tenantId)
-      .eq('status', 'pending'),
-  ])
+  const [conversationsResult, clientsResult, recentConversations, todayAppointments, pendingApprovalsResult] =
+    await Promise.all([
+      supabase
+        .from('conversations')
+        .select('id', { count: 'exact', head: true })
+        .eq('tenant_id', tenantId),
+      supabase
+        .from('clients')
+        .select('id', { count: 'exact', head: true })
+        .eq('tenant_id', tenantId),
+      supabase
+        .from('conversations')
+        .select('*, clients(name), messages(content, role, created_at)')
+        .eq('tenant_id', tenantId)
+        .order('created_at', { ascending: false })
+        .limit(5),
+      supabase
+        .from('appointments')
+        .select('id', { count: 'exact', head: true })
+        .eq('tenant_id', tenantId)
+        .neq('status', 'cancelled')
+        .gte('starts_at', `${todayStr}T00:00:00`)
+        .lte('starts_at', `${todayStr}T23:59:59`),
+      supabase
+        .from('approvals')
+        .select('id', { count: 'exact', head: true })
+        .eq('tenant_id', tenantId)
+        .eq('status', 'pending'),
+    ])
 
   const totalConversations = conversationsResult.count || 0
   const totalClients = clientsResult.count || 0
-  const recent = recentConversations.data || []
+  const recent = (recentConversations.data || []) as RecentConversation[]
   const todayApptCount = todayAppointments.count || 0
   const pendingApprovals = pendingApprovalsResult.count || 0
-  const activeCount = recent.filter((c: any) => c.status === 'active').length
+  const activeCount = recent.filter((conversation) => conversation.status === 'active').length
 
   const stats = [
     {
-      name: 'Active Conversations',
+      name: 'Active conversations',
       value: activeCount,
+      note: 'Live threads needing attention',
       icon: MessageSquare,
-      iconColor: 'text-[#1d1d1f]',
-      bgColor: 'bg-[#f5f5f7]',
-      borderColor: 'border-l-[#1d1d1f]',
+      tone: 'bg-[rgba(208,109,79,0.12)] text-[var(--accent)]',
     },
     {
-      name: "Today's Appointments",
+      name: "Today's appointments",
       value: todayApptCount,
+      note: 'Confirmed and pending bookings',
       icon: Calendar,
-      iconColor: 'text-[#424245]',
-      bgColor: 'bg-[#f5f5f7]',
-      borderColor: 'border-l-[#424245]',
+      tone: 'bg-[rgba(43,114,107,0.12)] text-[var(--teal)]',
     },
     {
-      name: 'Pending Approvals',
+      name: 'Pending approvals',
       value: pendingApprovals,
+      note: 'Actions waiting on owner input',
       icon: CheckCircle,
-      iconColor: 'text-[#86868b]',
-      bgColor: 'bg-[#f5f5f7]',
-      borderColor: 'border-l-[#86868b]',
+      tone: 'bg-amber-50 text-amber-700',
     },
     {
-      name: 'New Leads',
+      name: 'Client directory',
       value: totalClients,
+      note: 'Known contacts across channels',
       icon: UserPlus,
-      iconColor: 'text-[#424245]',
-      bgColor: 'bg-[#f5f5f7]',
-      borderColor: 'border-l-[#424245]',
+      tone: 'bg-[rgba(36,28,23,0.08)] text-[var(--ink)]',
     },
   ]
 
   return (
-    <div className="min-h-screen bg-[#f5f5f7]">
-      <div className="space-y-8 max-w-7xl mx-auto px-4 py-6">
-        {/* Greeting */}
-        <div>
-          <h1 className="text-2xl font-semibold text-[#1d1d1f] mb-1">
-            {greeting} 👋
-          </h1>
-          <p className="text-[#86868b] text-base">
-            Here&apos;s what&apos;s happening with your business today
-          </p>
-        </div>
-
-        {/* Stats grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-          {stats.map((stat) => (
-            <div
-              key={stat.name}
-              className={`bg-white rounded-2xl border border-[#d2d2d7] shadow-sm p-6 border-l-4 ${stat.borderColor}`}
-            >
-              <div className="flex items-start justify-between">
-                <div>
-                  <p className="text-sm font-medium text-[#86868b] mb-2">{stat.name}</p>
-                  <p className="text-3xl font-semibold text-[#1d1d1f]">{stat.value}</p>
-                </div>
-                <div className={`p-3 rounded-xl ${stat.bgColor}`}>
-                  <stat.icon className={`w-5 h-5 ${stat.iconColor}`} />
-                </div>
+    <div className="dashboard-stack">
+      <PageIntro
+        eyebrow={`${tenant.name} workspace`}
+        title={`${greeting}. Your operation is staged and visible.`}
+        description="Use this view to spot pressure points quickly: live conversations, today's schedule, approvals, and the newest customer activity without jumping across tabs."
+        actions={
+          <>
+            <Link href="/conversations" className="btn-primary">
+              Open conversations
+              <ArrowRight className="h-4 w-4" />
+            </Link>
+            <Link href="/schedule" className="btn-secondary">
+              Review schedule
+            </Link>
+          </>
+        }
+        aside={
+          <div className="panel-muted w-full rounded-[28px] p-5 lg:max-w-sm">
+            <p className="text-xs uppercase tracking-[0.2em] text-[var(--ink-faint)]">
+              Current posture
+            </p>
+            <div className="mt-4 space-y-3">
+              <div className="flex items-center justify-between rounded-[22px] bg-white/50 px-4 py-3">
+                <span className="text-sm text-[var(--ink-soft)]">Conversation volume</span>
+                <span className="chip chip-accent">{totalConversations} total</span>
+              </div>
+              <div className="flex items-center justify-between rounded-[22px] bg-white/50 px-4 py-3">
+                <span className="text-sm text-[var(--ink-soft)]">Approvals waiting</span>
+                <span className="chip chip-teal">{pendingApprovals} pending</span>
               </div>
             </div>
-          ))}
-        </div>
-
-        {/* Recent conversations */}
-        <div className="bg-white rounded-2xl border border-[#d2d2d7] shadow-sm">
-          <div className="px-6 py-5 border-b border-[#d2d2d7]">
-            <h2 className="text-lg font-semibold text-[#1d1d1f]">Recent Conversations</h2>
-            <p className="text-sm text-[#86868b] mt-0.5">Your latest customer interactions</p>
           </div>
-          <div className="divide-y divide-[#f5f5f7]">
+        }
+      />
+
+      <section className="grid gap-4 xl:grid-cols-4">
+        {stats.map((stat) => (
+          <div key={stat.name} className="panel metric-card stat-glow rounded-[30px]">
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <p className="text-sm text-[var(--ink-faint)]">{stat.name}</p>
+                <p className="mt-3 text-4xl font-semibold text-[var(--ink)]">{stat.value}</p>
+              </div>
+              <div className={`flex h-12 w-12 items-center justify-center rounded-2xl ${stat.tone}`}>
+                <stat.icon className="h-5 w-5" />
+              </div>
+            </div>
+            <p className="mt-5 text-sm leading-7 text-[var(--ink-soft)]">{stat.note}</p>
+          </div>
+        ))}
+      </section>
+
+      <section className="grid gap-4 xl:grid-cols-[minmax(0,1.25fr)_minmax(20rem,0.75fr)]">
+        <div className="panel dashboard-table rounded-[32px]">
+          <div className="flex items-center justify-between gap-4 border-b border-[var(--line)] px-6 py-5">
+            <div>
+              <p className="kicker">Activity feed</p>
+              <h2 className="mt-2 text-2xl font-semibold text-[var(--ink)]">Recent conversations</h2>
+            </div>
+            <Link href="/conversations" className="btn-secondary">
+              View all
+            </Link>
+          </div>
+
+          <div>
             {recent.length === 0 ? (
-              <div className="px-6 py-12 text-center">
-                <div className="w-14 h-14 bg-[#f5f5f7] rounded-2xl flex items-center justify-center mx-auto mb-4">
-                  <MessageSquare className="w-7 h-7 text-[#86868b]" />
+              <div className="dashboard-empty">
+                <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-[26px] bg-[rgba(208,109,79,0.12)]">
+                  <MessageSquare className="h-7 w-7 text-[var(--accent)]" />
                 </div>
-                <p className="text-[#424245] font-medium text-base">No conversations yet</p>
-                <p className="text-[#86868b] text-sm mt-1">Share your chat link to get started!</p>
+                <p className="mt-5 text-lg font-semibold text-[var(--ink)]">No conversations yet</p>
+                <p className="mt-2 text-sm leading-7 text-[var(--ink-soft)]">
+                  Share the chat link or enable your channels to start capturing customer demand.
+                </p>
               </div>
             ) : (
-              recent.map((conv: any) => {
-                const lastMessage = conv.messages?.[conv.messages.length - 1]
+              recent.map((conversation) => {
+                const lastMessage = conversation.messages?.[conversation.messages.length - 1]
                 return (
-                  <a
-                    key={conv.id}
-                    href={`/conversations/${conv.id}`}
-                    className="flex items-center gap-4 px-6 py-4 hover:bg-[#f5f5f7] transition-colors"
+                  <Link
+                    key={conversation.id}
+                    href={`/conversations/${conversation.id}`}
+                    className="dashboard-table-row flex items-center gap-4 px-6 py-5"
                   >
-                    <div className="w-10 h-10 bg-[#f5f5f7] rounded-full flex items-center justify-center flex-shrink-0">
-                      <span className="text-[#1d1d1f] font-semibold text-sm">
-                        {(conv.clients?.name || 'A').charAt(0).toUpperCase()}
+                    <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[rgba(255,255,255,0.55)]">
+                      <span className="text-sm font-semibold text-[var(--ink)]">
+                        {(conversation.clients?.name || 'A').charAt(0).toUpperCase()}
                       </span>
                     </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-semibold text-[#1d1d1f] truncate">
-                        {conv.clients?.name || 'Anonymous'}
-                      </p>
-                      <p className="text-sm text-[#86868b] truncate mt-0.5">
-                        {lastMessage?.content || 'No messages'}
-                      </p>
-                    </div>
-                    <div className="text-right flex-shrink-0">
-                      <span
-                        className={`inline-block rounded-full px-3 py-1 text-xs font-medium ${
-                          conv.status === 'active'
-                            ? 'bg-emerald-50 text-emerald-700'
-                            : conv.status === 'escalated'
-                            ? 'bg-red-50 text-red-700'
-                            : 'bg-[#f5f5f7] text-[#424245]'
-                        }`}
-                      >
-                        {conv.status}
-                      </span>
-                      <p className="text-xs text-[#86868b] mt-1.5 capitalize">
-                        {conv.channel?.replace('_', ' ')}
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-3">
+                        <p className="truncate text-sm font-semibold text-[var(--ink)]">
+                          {conversation.clients?.name || 'Anonymous'}
+                        </p>
+                        <span className="chip capitalize">
+                          {conversation.channel?.replace('_', ' ') || 'unknown'}
+                        </span>
+                      </div>
+                      <p className="mt-2 truncate text-sm text-[var(--ink-soft)]">
+                        {lastMessage?.content || 'No messages recorded yet'}
                       </p>
                     </div>
-                  </a>
+                    <span
+                      className={`chip capitalize ${
+                        conversation.status === 'active'
+                          ? 'chip-teal'
+                          : conversation.status === 'escalated'
+                          ? 'chip-accent'
+                          : ''
+                      }`}
+                    >
+                      {conversation.status}
+                    </span>
+                  </Link>
                 )
               })
             )}
           </div>
         </div>
-      </div>
+
+        <div className="space-y-4">
+          <div className="panel rounded-[32px] px-6 py-6">
+            <p className="kicker">Today</p>
+            <h2 className="mt-2 text-2xl font-semibold text-[var(--ink)]">Operating note</h2>
+            <p className="mt-3 text-sm leading-7 text-[var(--ink-soft)]">
+              You have {todayApptCount} appointment{todayApptCount === 1 ? '' : 's'} on the books
+              and {pendingApprovals} approval{pendingApprovals === 1 ? '' : 's'} that may need review.
+            </p>
+          </div>
+
+          <div className="panel rounded-[32px] px-6 py-6">
+            <div className="flex items-center gap-3">
+              <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[rgba(43,114,107,0.12)]">
+                <Clock className="h-5 w-5 text-[var(--teal)]" />
+              </div>
+              <div>
+                <p className="text-sm font-semibold text-[var(--ink)]">Next review cycle</p>
+                <p className="text-sm text-[var(--ink-faint)]">Keep approvals and scheduling clear before the next rush.</p>
+              </div>
+            </div>
+            <div className="mt-5 space-y-3">
+              <Link href="/approvals" className="btn-secondary w-full justify-between">
+                Approval queue
+                <ArrowRight className="h-4 w-4" />
+              </Link>
+              <Link href="/clients" className="btn-secondary w-full justify-between">
+                Client directory
+                <ArrowRight className="h-4 w-4" />
+              </Link>
+            </div>
+          </div>
+        </div>
+      </section>
     </div>
   )
 }

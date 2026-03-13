@@ -25,13 +25,15 @@ export function CallClientButton({
     <>
       <button
         onClick={() => setShowModal(true)}
-        className="p-2.5 hover:bg-[#f5f5f7] bg-white border border-[#d2d2d7] rounded-xl transition-colors group"
+        className="btn-primary"
         title="Call client"
       >
-        <Phone className="w-5 h-5 text-[#86868b] group-hover:text-[#1d1d1f] transition-colors" />
+        <Phone className="h-4 w-4" />
+        Call client
       </button>
 
       <OutboundCallModal
+        key={`${clientId}-${showModal ? 'open' : 'closed'}`}
         open={showModal}
         onClose={() => setShowModal(false)}
         clientId={clientId}

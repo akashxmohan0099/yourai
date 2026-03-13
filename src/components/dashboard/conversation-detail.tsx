@@ -1,23 +1,21 @@
 'use client'
 
-import { useEffect, useState, useRef, type ElementType } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { formatDateTime } from '@/lib/utils'
 import {
   ArrowLeft,
   Bot,
-  User,
-  MessageSquare,
-  Phone,
-  Mail,
-  Smartphone,
   Clock,
   FileText,
-  Play,
+  Mail,
+  MessageSquare,
+  Phone,
   PhoneCall,
-  PhoneOff,
+  Smartphone,
+  User,
 } from 'lucide-react'
 import Link from 'next/link'
+import { useEffect, useRef, useState, type ElementType } from 'react'
 
 interface Message {
   id: string
@@ -27,8 +25,22 @@ interface Message {
   metadata?: Record<string, unknown>
 }
 
+interface ConversationRecord {
+  id: string
+  channel: string
+  status: string
+  started_at: string
+  ended_at?: string | null
+  metadata?: Record<string, unknown> | null
+  clients?: {
+    name?: string | null
+    email?: string | null
+    phone?: string | null
+  } | null
+}
+
 interface ConversationDetailProps {
-  conversation: any
+  conversation: ConversationRecord
   initialMessages: Message[]
   tenantId: string
 }
@@ -49,11 +61,11 @@ const channelLabels: Record<string, string> = {
 }
 
 const channelBadgeStyles: Record<string, string> = {
-  web_chat: 'bg-blue-50 text-blue-700 border border-blue-100',
-  voice: 'bg-emerald-50 text-emerald-700 border border-emerald-100',
-  sms: 'bg-amber-50 text-amber-700 border border-amber-100',
-  email: 'bg-purple-50 text-purple-700 border border-purple-100',
-  whatsapp: 'bg-green-50 text-green-700 border border-green-100',
+  web_chat: 'chip chip-teal',
+  voice: 'chip chip-accent',
+  sms: 'chip',
+  email: 'chip',
+  whatsapp: 'chip chip-teal',
 }
 
 function formatDuration(seconds: number): string {
@@ -84,7 +96,7 @@ export function ConversationDetail({
           filter: `conversation_id=eq.${conversation.id}`,
         },
         (payload) => {
-          setMessages((prev) => [...prev, payload.new as Message])
+          setMessages((previous) => [...previous, payload.new as Message])
         }
       )
       .subscribe()
@@ -92,7 +104,7 @@ export function ConversationDetail({
     return () => {
       supabase.removeChannel(channel)
     }
-  }, [conversation.id, supabase])
+  }, [conversation.id, supabase, tenantId])
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
@@ -100,7 +112,7 @@ export function ConversationDetail({
 
   const ChannelIcon = channelIcons[conversation.channel] || MessageSquare
   const channelLabel = channelLabels[conversation.channel] || conversation.channel
-  const badgeStyle = channelBadgeStyles[conversation.channel] || 'bg-[#f5f5f7] text-[#424245]'
+  const badgeStyle = channelBadgeStyles[conversation.channel] || 'chip'
   const metadata = conversation.metadata || {}
   const isVoice = conversation.channel === 'voice'
   const callSummary = metadata.summary as string | undefined
@@ -111,230 +123,285 @@ export function ConversationDetail({
   const callerNumber = metadata.callerNumber as string | undefined
 
   return (
-    <div className="min-h-screen bg-[#f5f5f7]">
-      <div className="max-w-5xl mx-auto">
-        {/* Header */}
-        <div className="flex items-center gap-4 mb-6">
-          <Link
-            href="/conversations"
-            className="p-2.5 hover:bg-[#d2d2d7] bg-white border border-[#d2d2d7] rounded-xl transition-colors"
-          >
-            <ArrowLeft className="w-5 h-5 text-[#424245]" />
-          </Link>
-          <div className="flex-1">
-            <h1 className="text-2xl font-semibold text-[#1d1d1f]">
-              {conversation.clients?.name || 'Anonymous'}
-            </h1>
-            <div className="flex items-center gap-3 mt-1.5">
-              {/* Channel badge */}
-              <span className={`flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium ${badgeStyle}`}>
-                <ChannelIcon className="w-3.5 h-3.5" />
-                {channelLabel}
-              </span>
-              {/* Status badge */}
-              <span
-                className={`rounded-full px-3 py-1 text-xs font-medium ${
-                  conversation.status === 'active'
-                    ? 'bg-emerald-50 text-emerald-700'
-                    : conversation.status === 'escalated'
-                    ? 'bg-red-50 text-red-700'
-                    : 'bg-[#f5f5f7] text-[#424245]'
-                }`}
-              >
-                {conversation.status}
-              </span>
-              {/* Duration for voice calls */}
-              {isVoice && durationSeconds && (
-                <span className="flex items-center gap-1 text-xs text-[#86868b]">
-                  <Clock className="w-3.5 h-3.5" />
-                  {formatDuration(durationSeconds)}
+    <div className="dashboard-stack">
+      <section className="panel rounded-[32px] px-5 py-5 sm:px-6">
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+          <div className="flex items-start gap-4">
+            <Link href="/conversations" className="btn-secondary h-11 w-11 rounded-2xl px-0">
+              <ArrowLeft className="h-4 w-4" />
+            </Link>
+            <div className="space-y-3">
+              <p className="kicker">Conversation record</p>
+              <div>
+                <h1 className="text-3xl font-semibold text-[var(--ink)]">
+                  {conversation.clients?.name || 'Anonymous'}
+                </h1>
+                <p className="mt-2 text-sm leading-7 text-[var(--ink-soft)]">
+                  Detailed timeline, metadata, and channel context for this customer thread.
+                </p>
+              </div>
+              <div className="flex flex-wrap items-center gap-2">
+                <span className={badgeStyle}>
+                  <ChannelIcon className="h-3.5 w-3.5" />
+                  {channelLabel}
                 </span>
-              )}
+                <span
+                  className={`chip capitalize ${
+                    conversation.status === 'active'
+                      ? 'chip-teal'
+                      : conversation.status === 'escalated'
+                      ? 'chip-accent'
+                      : ''
+                  }`}
+                >
+                  {conversation.status}
+                </span>
+                {isVoice && durationSeconds ? (
+                  <span className="chip">
+                    <Clock className="h-3.5 w-3.5" />
+                    {formatDuration(durationSeconds)}
+                  </span>
+                ) : null}
+              </div>
+            </div>
+          </div>
+
+          <div className="panel-muted rounded-[26px] px-4 py-4 lg:max-w-sm">
+            <p className="text-xs uppercase tracking-[0.2em] text-[var(--ink-faint)]">Started</p>
+            <p className="mt-2 text-sm font-semibold text-[var(--ink)]">
+              {formatDateTime(conversation.started_at)}
+            </p>
+            <p className="mt-2 text-sm leading-7 text-[var(--ink-soft)]">
+              {messages.length} message{messages.length === 1 ? '' : 's'} captured so far.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      {isVoice && callSummary ? (
+        <div className="panel rounded-[30px] px-5 py-5 sm:px-6">
+          <div className="flex items-start gap-4">
+            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[rgba(43,114,107,0.12)]">
+              <FileText className="h-5 w-5 text-[var(--teal)]" />
+            </div>
+            <div>
+              <p className="kicker">Call summary</p>
+              <p className="mt-3 text-sm leading-8 text-[var(--ink-soft)]">{callSummary}</p>
             </div>
           </div>
         </div>
+      ) : null}
 
-        {/* Voice call summary banner */}
-        {isVoice && callSummary && (
-          <div className="bg-white rounded-2xl border border-[#d2d2d7] shadow-sm p-5 mb-6">
-            <div className="flex items-start gap-3">
-              <div className="p-2 bg-emerald-50 rounded-xl flex-shrink-0">
-                <FileText className="w-4 h-4 text-emerald-600" />
+      <div className="grid gap-4 xl:grid-cols-[minmax(0,1.35fr)_minmax(20rem,0.7fr)]">
+        <div className="dashboard-stack">
+          <div className="panel rounded-[32px] px-5 py-5 sm:px-6">
+            <div className="flex items-center justify-between gap-4 border-b border-[var(--line)] pb-4">
+              <div>
+                <p className="kicker">Timeline</p>
+                <h2 className="mt-2 text-2xl font-semibold text-[var(--ink)]">Messages</h2>
               </div>
-              <div className="flex-1 min-w-0">
-                <h3 className="text-sm font-semibold text-[#1d1d1f] mb-1">Call Summary</h3>
-                <p className="text-sm text-[#424245] leading-relaxed">{callSummary}</p>
-              </div>
+              <span className="chip">{messages.length} captured</span>
             </div>
-          </div>
-        )}
 
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-          {/* Messages / Transcript */}
-          <div className="lg:col-span-3 space-y-6">
-            {/* Live messages */}
-            <div className="bg-white rounded-2xl border border-[#d2d2d7] shadow-sm p-6 space-y-5 max-h-[600px] overflow-y-auto">
-              {messages.length === 0 && !callTranscript && (
-                <div className="text-center py-12">
-                  <div className="w-14 h-14 bg-[#f5f5f7] rounded-2xl flex items-center justify-center mx-auto mb-4">
-                    <MessageSquare className="w-7 h-7 text-[#86868b]" />
+            <div className="mt-5 max-h-[42rem] space-y-4 overflow-y-auto pr-1">
+              {messages.length === 0 && !callTranscript ? (
+                <div className="dashboard-empty rounded-[28px] bg-white/40">
+                  <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-[26px] bg-[rgba(208,109,79,0.12)]">
+                    <MessageSquare className="h-7 w-7 text-[var(--accent)]" />
                   </div>
-                  <p className="text-[#424245] font-medium">No messages yet</p>
+                  <p className="mt-5 text-lg font-semibold text-[var(--ink)]">No messages yet</p>
                 </div>
-              )}
-              {messages.map((msg) => {
-                const isCustomer = msg.role === 'user'
-                const msgChannel = (msg.metadata?.channel as string) || conversation.channel
-                const isVoiceMsg = msgChannel === 'voice'
+              ) : null}
+
+              {messages.map((message) => {
+                const isCustomer = message.role === 'user'
+                const msgChannel = (message.metadata?.channel as string) || conversation.channel
+                const isVoiceMessage = msgChannel === 'voice'
+
                 return (
-                  <div key={msg.id} className="flex gap-3">
-                    <div className="w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 bg-[#f5f5f7]">
-                      {isCustomer ? (
-                        <User className="w-4 h-4 text-[#424245]" />
-                      ) : (
-                        <Bot className="w-4 h-4 text-[#424245]" />
-                      )}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2">
-                        <span className="text-sm font-semibold text-[#1d1d1f]">
+                  <div
+                    key={message.id}
+                    className={`flex gap-3 ${isCustomer ? 'justify-end' : 'justify-start'}`}
+                  >
+                    {!isCustomer ? (
+                      <div className="mt-1 flex h-10 w-10 items-center justify-center rounded-2xl bg-[rgba(43,114,107,0.12)]">
+                        <Bot className="h-4 w-4 text-[var(--teal)]" />
+                      </div>
+                    ) : null}
+                    <div
+                      className={`max-w-[80%] rounded-[26px] px-4 py-4 ${
+                        isCustomer
+                          ? 'bg-[linear-gradient(135deg,var(--accent),var(--teal))] text-white'
+                          : 'panel-muted'
+                      }`}
+                    >
+                      <div className="flex flex-wrap items-center gap-2">
+                        <span
+                          className={`text-xs font-semibold uppercase tracking-[0.12em] ${
+                            isCustomer ? 'text-white/78' : 'text-[var(--ink-faint)]'
+                          }`}
+                        >
                           {isCustomer ? 'Customer' : 'AI Assistant'}
                         </span>
-                        <span className="text-xs text-[#86868b]">
-                          {formatDateTime(msg.created_at)}
+                        <span
+                          className={`text-xs ${
+                            isCustomer ? 'text-white/62' : 'text-[var(--ink-faint)]'
+                          }`}
+                        >
+                          {formatDateTime(message.created_at)}
                         </span>
-                        {isVoiceMsg && (
-                          <span className="flex items-center gap-1 text-xs text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded">
-                            <Phone className="w-3 h-3" />
+                        {isVoiceMessage ? (
+                          <span
+                            className={`rounded-full px-2 py-0.5 text-[11px] font-medium ${
+                              isCustomer
+                                ? 'bg-white/12 text-white'
+                                : 'bg-[rgba(208,109,79,0.12)] text-[var(--accent)]'
+                            }`}
+                          >
                             voice
                           </span>
-                        )}
+                        ) : null}
                       </div>
-                      <p className="text-sm text-[#424245] mt-1 whitespace-pre-wrap leading-relaxed">
-                        {msg.content}
+                      <p
+                        className={`mt-3 whitespace-pre-wrap text-sm leading-7 ${
+                          isCustomer ? 'text-white' : 'text-[var(--ink-soft)]'
+                        }`}
+                      >
+                        {message.content}
                       </p>
                     </div>
+                    {isCustomer ? (
+                      <div className="mt-1 flex h-10 w-10 items-center justify-center rounded-2xl bg-[rgba(208,109,79,0.12)]">
+                        <User className="h-4 w-4 text-[var(--accent)]" />
+                      </div>
+                    ) : null}
                   </div>
                 )
               })}
               <div ref={bottomRef} />
             </div>
-
-            {/* Full call transcript (from end-of-call report) */}
-            {isVoice && callTranscript && (
-              <div className="bg-white rounded-2xl border border-[#d2d2d7] shadow-sm">
-                <div className="px-6 py-4 border-b border-[#d2d2d7] flex items-center gap-2">
-                  <PhoneCall className="w-4 h-4 text-emerald-600" />
-                  <h3 className="text-sm font-semibold text-[#1d1d1f]">Full Call Transcript</h3>
-                </div>
-                <div className="p-6 space-y-3 max-h-[400px] overflow-y-auto">
-                  {callTranscript.split('\n').map((line, i) => {
-                    const isAI = line.startsWith('AI:')
-                    const speaker = isAI ? 'AI' : 'Customer'
-                    const text = line.replace(/^(Customer|AI):\s*/, '')
-                    if (!text.trim()) return null
-                    return (
-                      <div key={i} className="flex gap-3">
-                        <div className={`w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 ${
-                          isAI ? 'bg-[#f5f5f7]' : 'bg-[#f5f5f7]'
-                        }`}>
-                          {isAI ? (
-                            <Bot className="w-3.5 h-3.5 text-[#424245]" />
-                          ) : (
-                            <User className="w-3.5 h-3.5 text-[#424245]" />
-                          )}
-                        </div>
-                        <div>
-                          <span className="text-xs font-semibold text-[#86868b]">{speaker}</span>
-                          <p className="text-sm text-[#424245] leading-relaxed">{text}</p>
-                        </div>
-                      </div>
-                    )
-                  })}
-                </div>
-              </div>
-            )}
           </div>
 
-          {/* Sidebar metadata */}
-          <div className="space-y-4">
-            <div className="bg-white rounded-2xl border border-[#d2d2d7] shadow-sm p-5">
-              <h3 className="text-sm font-semibold text-[#1d1d1f] mb-3">Details</h3>
-              <div className="space-y-3">
-                <div>
-                  <p className="text-xs font-medium text-[#86868b] uppercase tracking-wide">Client</p>
-                  <p className="text-sm text-[#1d1d1f] mt-0.5">{conversation.clients?.name || 'Anonymous'}</p>
-                </div>
-                {conversation.clients?.email && (
-                  <div>
-                    <p className="text-xs font-medium text-[#86868b] uppercase tracking-wide">Email</p>
-                    <p className="text-sm text-[#424245] mt-0.5">{conversation.clients.email}</p>
-                  </div>
-                )}
-                {(conversation.clients?.phone || callerNumber) && (
-                  <div>
-                    <p className="text-xs font-medium text-[#86868b] uppercase tracking-wide">Phone</p>
-                    <p className="text-sm text-[#424245] mt-0.5">{conversation.clients?.phone || callerNumber}</p>
-                  </div>
-                )}
-                <div>
-                  <p className="text-xs font-medium text-[#86868b] uppercase tracking-wide">Channel</p>
-                  <span className={`inline-flex items-center gap-1.5 mt-1 rounded-full px-2.5 py-0.5 text-xs font-medium ${badgeStyle}`}>
-                    <ChannelIcon className="w-3 h-3" />
-                    {channelLabel}
-                  </span>
+          {isVoice && callTranscript ? (
+            <div className="panel rounded-[32px] px-5 py-5 sm:px-6">
+              <div className="flex items-center gap-3 border-b border-[var(--line)] pb-4">
+                <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[rgba(208,109,79,0.12)]">
+                  <PhoneCall className="h-5 w-5 text-[var(--accent)]" />
                 </div>
                 <div>
-                  <p className="text-xs font-medium text-[#86868b] uppercase tracking-wide">Started</p>
-                  <p className="text-sm text-[#424245] mt-0.5">{formatDateTime(conversation.started_at)}</p>
+                  <p className="kicker">Call transcript</p>
+                  <h3 className="mt-2 text-2xl font-semibold text-[var(--ink)]">Full voice record</h3>
                 </div>
-                {conversation.ended_at && (
-                  <div>
-                    <p className="text-xs font-medium text-[#86868b] uppercase tracking-wide">Ended</p>
-                    <p className="text-sm text-[#424245] mt-0.5">{formatDateTime(conversation.ended_at)}</p>
-                  </div>
-                )}
-                <div>
-                  <p className="text-xs font-medium text-[#86868b] uppercase tracking-wide">Messages</p>
-                  <p className="text-sm text-[#424245] mt-0.5">{messages.length}</p>
-                </div>
+              </div>
+              <div className="mt-5 max-h-[26rem] space-y-3 overflow-y-auto pr-1">
+                {callTranscript.split('\n').map((line, index) => {
+                  const isAI = line.startsWith('AI:')
+                  const speaker = isAI ? 'AI' : 'Customer'
+                  const text = line.replace(/^(Customer|AI):\s*/, '')
+                  if (!text.trim()) return null
+
+                  return (
+                    <div key={index} className="flex gap-3 rounded-[24px] bg-white/40 px-4 py-4">
+                      <div
+                        className={`flex h-9 w-9 items-center justify-center rounded-2xl ${
+                          isAI
+                            ? 'bg-[rgba(43,114,107,0.12)] text-[var(--teal)]'
+                            : 'bg-[rgba(208,109,79,0.12)] text-[var(--accent)]'
+                        }`}
+                      >
+                        {isAI ? <Bot className="h-4 w-4" /> : <User className="h-4 w-4" />}
+                      </div>
+                      <div>
+                        <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[var(--ink-faint)]">
+                          {speaker}
+                        </p>
+                        <p className="mt-2 text-sm leading-7 text-[var(--ink-soft)]">{text}</p>
+                      </div>
+                    </div>
+                  )
+                })}
               </div>
             </div>
+          ) : null}
+        </div>
 
-            {/* Voice-specific details */}
-            {isVoice && (
-              <div className="bg-white rounded-2xl border border-[#d2d2d7] shadow-sm p-5">
-                <h3 className="text-sm font-semibold text-[#1d1d1f] mb-3 flex items-center gap-2">
-                  <Phone className="w-4 h-4 text-emerald-600" />
-                  Call Details
-                </h3>
-                <div className="space-y-3">
-                  {durationSeconds && (
-                    <div>
-                      <p className="text-xs font-medium text-[#86868b] uppercase tracking-wide">Duration</p>
-                      <p className="text-sm text-[#424245] mt-0.5">{formatDuration(durationSeconds)}</p>
-                    </div>
-                  )}
-                  {endedReason && (
-                    <div>
-                      <p className="text-xs font-medium text-[#86868b] uppercase tracking-wide">Ended</p>
-                      <p className="text-sm text-[#424245] mt-0.5 capitalize">{endedReason.replace(/[-_]/g, ' ')}</p>
-                    </div>
-                  )}
-                  {recordingUrl && (
-                    <div>
-                      <p className="text-xs font-medium text-[#86868b] uppercase tracking-wide mb-1.5">Recording</p>
-                      <audio controls className="w-full h-10" src={recordingUrl}>
-                        <a href={recordingUrl} target="_blank" rel="noopener noreferrer" className="text-sm text-[#0066CC]">
-                          Listen to recording
-                        </a>
-                      </audio>
-                    </div>
-                  )}
+        <div className="dashboard-stack">
+          <div className="panel rounded-[32px] px-5 py-5 sm:px-6">
+            <p className="kicker">Metadata</p>
+            <h3 className="mt-2 text-2xl font-semibold text-[var(--ink)]">Details</h3>
+            <div className="mt-5 space-y-4">
+              <div className="rounded-[24px] bg-white/40 px-4 py-4">
+                <p className="text-xs uppercase tracking-[0.18em] text-[var(--ink-faint)]">Client</p>
+                <p className="mt-2 text-sm font-semibold text-[var(--ink)]">
+                  {conversation.clients?.name || 'Anonymous'}
+                </p>
+              </div>
+              {conversation.clients?.email ? (
+                <div className="rounded-[24px] bg-white/40 px-4 py-4">
+                  <p className="text-xs uppercase tracking-[0.18em] text-[var(--ink-faint)]">Email</p>
+                  <p className="mt-2 text-sm text-[var(--ink-soft)]">{conversation.clients.email}</p>
+                </div>
+              ) : null}
+              {conversation.clients?.phone || callerNumber ? (
+                <div className="rounded-[24px] bg-white/40 px-4 py-4">
+                  <p className="text-xs uppercase tracking-[0.18em] text-[var(--ink-faint)]">Phone</p>
+                  <p className="mt-2 text-sm text-[var(--ink-soft)]">
+                    {conversation.clients?.phone || callerNumber}
+                  </p>
+                </div>
+              ) : null}
+              <div className="rounded-[24px] bg-white/40 px-4 py-4">
+                <p className="text-xs uppercase tracking-[0.18em] text-[var(--ink-faint)]">Started</p>
+                <p className="mt-2 text-sm text-[var(--ink-soft)]">{formatDateTime(conversation.started_at)}</p>
+              </div>
+              {conversation.ended_at ? (
+                <div className="rounded-[24px] bg-white/40 px-4 py-4">
+                  <p className="text-xs uppercase tracking-[0.18em] text-[var(--ink-faint)]">Ended</p>
+                  <p className="mt-2 text-sm text-[var(--ink-soft)]">{formatDateTime(conversation.ended_at)}</p>
+                </div>
+              ) : null}
+            </div>
+          </div>
+
+          {isVoice ? (
+            <div className="panel rounded-[32px] px-5 py-5 sm:px-6">
+              <div className="flex items-center gap-3">
+                <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[rgba(43,114,107,0.12)]">
+                  <Phone className="h-5 w-5 text-[var(--teal)]" />
+                </div>
+                <div>
+                  <p className="kicker">Voice session</p>
+                  <h3 className="mt-2 text-2xl font-semibold text-[var(--ink)]">Call details</h3>
                 </div>
               </div>
-            )}
-          </div>
+              <div className="mt-5 space-y-4">
+                {durationSeconds ? (
+                  <div className="rounded-[24px] bg-white/40 px-4 py-4">
+                    <p className="text-xs uppercase tracking-[0.18em] text-[var(--ink-faint)]">Duration</p>
+                    <p className="mt-2 text-sm text-[var(--ink-soft)]">{formatDuration(durationSeconds)}</p>
+                  </div>
+                ) : null}
+                {endedReason ? (
+                  <div className="rounded-[24px] bg-white/40 px-4 py-4">
+                    <p className="text-xs uppercase tracking-[0.18em] text-[var(--ink-faint)]">Ended reason</p>
+                    <p className="mt-2 text-sm capitalize text-[var(--ink-soft)]">
+                      {endedReason.replace(/[-_]/g, ' ')}
+                    </p>
+                  </div>
+                ) : null}
+                {recordingUrl ? (
+                  <div className="rounded-[24px] bg-white/40 px-4 py-4">
+                    <p className="text-xs uppercase tracking-[0.18em] text-[var(--ink-faint)]">Recording</p>
+                    <audio controls className="mt-3 w-full" src={recordingUrl}>
+                      <a href={recordingUrl} target="_blank" rel="noopener noreferrer">
+                        Listen to recording
+                      </a>
+                    </audio>
+                  </div>
+                ) : null}
+              </div>
+            </div>
+          ) : null}
         </div>
       </div>
     </div>

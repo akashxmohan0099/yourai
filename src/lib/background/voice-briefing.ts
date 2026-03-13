@@ -2,6 +2,7 @@ import { createAdminClient } from '@/lib/supabase/admin'
 import { runAgentSync } from '@/lib/ai/agent'
 import { buildBusinessContext } from '@/lib/ai/context-builder'
 import { type ModelMessage } from 'ai'
+import { buildVapiServerFields, getVapiWebhookSecret } from '@/lib/vapi/server-auth'
 
 const VAPI_API_BASE = 'https://api.vapi.ai'
 
@@ -46,6 +47,10 @@ export async function deliverVoiceBriefing(tenantId: string, briefingText: strin
 
   // Make outbound call
   const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
+  if (!getVapiWebhookSecret()) {
+    return { delivered: false, reason: 'Vapi webhook secret not configured' }
+  }
+  const serverFields = buildVapiServerFields(`${appUrl}/api/voice/respond`)
   const callPayload = {
     assistantId,
     phoneNumberId: config.vapi_phone_number_id,
@@ -55,7 +60,7 @@ export async function deliverVoiceBriefing(tenantId: string, briefingText: strin
     },
     assistantOverrides: {
       firstMessage: spokenBriefing,
-      serverUrl: `${appUrl}/api/voice/respond`,
+      ...serverFields,
       model: {
         messages: [
           {

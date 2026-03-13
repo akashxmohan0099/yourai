@@ -1,27 +1,27 @@
 'use client'
 
+import { cn } from '@/lib/utils'
+import {
+  Bot,
+  Calendar,
+  ExternalLink,
+  FileText,
+  LayoutDashboard,
+  Megaphone,
+  Menu,
+  Newspaper,
+  Radio,
+  Receipt,
+  Settings,
+  ShieldCheck,
+  Target,
+  Users,
+  X,
+  MessageSquare,
+} from 'lucide-react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import {
-  LayoutDashboard,
-  MessageSquare,
-  Users,
-  ShieldCheck,
-  Radio,
-  Settings,
-  ExternalLink,
-  Menu,
-  X,
-  Calendar,
-  Bot,
-  Newspaper,
-  FileText,
-  Receipt,
-  Target,
-  Megaphone,
-} from 'lucide-react'
 import { useState } from 'react'
-import { cn } from '@/lib/utils'
 
 interface SidebarProps {
   tenantName: string
@@ -30,7 +30,7 @@ interface SidebarProps {
 
 const navSections = [
   {
-    label: 'MAIN',
+    label: 'Overview',
     items: [
       { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
       { name: 'Conversations', href: '/conversations', icon: MessageSquare },
@@ -38,14 +38,14 @@ const navSections = [
     ],
   },
   {
-    label: 'CUSTOMERS',
+    label: 'Customers',
     items: [
       { name: 'Clients', href: '/clients', icon: Users },
       { name: 'Leads', href: '/leads', icon: Target },
     ],
   },
   {
-    label: 'BUSINESS',
+    label: 'Revenue',
     items: [
       { name: 'Quotes', href: '/quotes', icon: FileText },
       { name: 'Invoices', href: '/invoices', icon: Receipt },
@@ -53,14 +53,14 @@ const navSections = [
     ],
   },
   {
-    label: 'AI',
+    label: 'Automation',
     items: [
       { name: 'AI Assistant', href: '/owner-chat', icon: Bot },
       { name: 'Briefings', href: '/briefings', icon: Newspaper },
     ],
   },
   {
-    label: 'CONFIG',
+    label: 'System',
     items: [
       { name: 'Settings', href: '/settings', icon: Settings },
       { name: 'Channels', href: '/channels', icon: Radio },
@@ -75,41 +75,59 @@ export function DashboardSidebar({ tenantName, tenantSlug }: SidebarProps) {
 
   const sidebarContent = (
     <>
-      {/* Brand */}
-      <div className="px-5 pt-6 pb-5">
-        <p className="text-lg font-semibold text-[#1d1d1f] tracking-tight">YourAI</p>
-        <p className="text-[13px] text-[#86868b] truncate mt-0.5">{tenantName}</p>
+      <div className="px-4 pb-5 pt-4">
+        <div className="rounded-[28px] border border-white/10 bg-white/5 p-4">
+          <div className="flex items-center gap-3">
+            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[rgba(208,109,79,0.18)]">
+              <Bot className="h-5 w-5 text-[#ffe6d8]" />
+            </div>
+            <div className="min-w-0">
+              <p className="truncate text-sm font-semibold text-[var(--sidebar-ink)]">YourAI</p>
+              <p className="truncate text-xs uppercase tracking-[0.2em] text-[#cdbdad]">
+                {tenantName}
+              </p>
+            </div>
+          </div>
+        </div>
       </div>
 
-      {/* Navigation */}
-      <nav className="flex-1 px-3 py-1 overflow-y-auto">
+      <nav className="flex-1 overflow-y-auto px-3 pb-4">
         {navSections.map((section) => (
           <div key={section.label} className="mb-5">
-            <p className="px-3 mb-1.5 text-[11px] font-medium text-[#86868b] uppercase tracking-widest">
+            <p className="px-3 pb-2 text-[11px] font-semibold uppercase tracking-[0.22em] text-[#96887a]">
               {section.label}
             </p>
-            <div className="space-y-px">
+            <div className="space-y-1">
               {section.items.map((item) => {
-                const isActive = pathname === item.href || pathname.startsWith(item.href + '/')
+                const isActive = pathname === item.href || pathname.startsWith(`${item.href}/`)
                 return (
                   <Link
                     key={item.name}
                     href={item.href}
                     onClick={() => setMobileOpen(false)}
                     className={cn(
-                      'flex items-center gap-3 px-3 py-2 rounded-xl text-sm font-medium transition-colors duration-100',
+                      'group flex items-center gap-3 rounded-[22px] px-3 py-3 text-sm font-medium transition-all',
                       isActive
-                        ? 'bg-[#f5f5f7] text-[#1d1d1f]'
-                        : 'text-[#86868b] hover:bg-[#f5f5f7] hover:text-[#1d1d1f]'
+                        ? 'bg-[linear-gradient(135deg,rgba(208,109,79,0.22),rgba(43,114,107,0.22))] text-[var(--sidebar-ink)]'
+                        : 'text-[#cdbdad] hover:bg-white/6 hover:text-[var(--sidebar-ink)]'
                     )}
                   >
-                    <item.icon
+                    <span
                       className={cn(
-                        'w-[18px] h-[18px] shrink-0',
-                        isActive ? 'text-[#1d1d1f]' : 'text-[#86868b]'
+                        'flex h-10 w-10 items-center justify-center rounded-2xl border transition-colors',
+                        isActive
+                          ? 'border-white/10 bg-white/10'
+                          : 'border-transparent bg-white/5 group-hover:border-white/10 group-hover:bg-white/10'
                       )}
-                    />
-                    {item.name}
+                    >
+                      <item.icon
+                        className={cn(
+                          'h-[18px] w-[18px]',
+                          isActive ? 'text-[#f8edde]' : 'text-[#cdbdad]'
+                        )}
+                      />
+                    </span>
+                    <span>{item.name}</span>
                   </Link>
                 )
               })}
@@ -118,15 +136,21 @@ export function DashboardSidebar({ tenantName, tenantSlug }: SidebarProps) {
         ))}
       </nav>
 
-      {/* Bottom section */}
-      <div className="px-3 py-4 border-t border-[#d2d2d7]">
+      <div className="px-4 pb-4">
         <Link
           href={`/chat/${tenantSlug}`}
           target="_blank"
-          className="flex items-center gap-3 px-3 py-2 rounded-xl text-sm text-[#86868b] hover:bg-[#f5f5f7] hover:text-[#424245] transition-colors duration-100"
+          className="block rounded-[28px] border border-white/10 bg-white/5 p-4 text-[#cdbdad] transition hover:bg-white/8 hover:text-[var(--sidebar-ink)]"
         >
-          <ExternalLink className="w-[18px] h-[18px]" />
-          Preview chat widget
+          <div className="flex items-start justify-between gap-4">
+            <div>
+              <p className="text-sm font-semibold text-[var(--sidebar-ink)]">Public widget</p>
+              <p className="mt-1 text-xs leading-6 text-[#cdbdad]">
+                Preview the customer-facing chat and voice entry point.
+              </p>
+            </div>
+            <ExternalLink className="mt-0.5 h-4 w-4" />
+          </div>
         </Link>
       </div>
     </>
@@ -134,27 +158,24 @@ export function DashboardSidebar({ tenantName, tenantSlug }: SidebarProps) {
 
   return (
     <>
-      {/* Mobile menu button */}
       <button
-        onClick={() => setMobileOpen(!mobileOpen)}
-        className="lg:hidden fixed top-4 left-4 z-50 p-2 bg-white rounded-xl border border-[#d2d2d7] shadow-sm"
+        onClick={() => setMobileOpen((current) => !current)}
+        className="panel fixed left-4 top-4 z-50 flex h-12 w-12 items-center justify-center rounded-2xl lg:hidden"
       >
-        {mobileOpen ? <X className="w-5 h-5 text-[#424245]" /> : <Menu className="w-5 h-5 text-[#424245]" />}
+        {mobileOpen ? <X className="h-5 w-5 text-[var(--ink)]" /> : <Menu className="h-5 w-5 text-[var(--ink)]" />}
       </button>
 
-      {/* Mobile overlay */}
-      {mobileOpen && (
+      {mobileOpen ? (
         <div
-          className="lg:hidden fixed inset-0 bg-black/30 backdrop-blur-sm z-30 transition-opacity duration-200"
+          className="fixed inset-0 z-30 bg-[rgba(28,22,18,0.35)] backdrop-blur-sm lg:hidden"
           onClick={() => setMobileOpen(false)}
         />
-      )}
+      ) : null}
 
-      {/* Sidebar */}
       <aside
         className={cn(
-          'fixed inset-y-0 left-0 z-40 w-[260px] bg-white border-r border-[#d2d2d7] flex flex-col transition-transform duration-200 ease-in-out lg:translate-x-0',
-          mobileOpen ? 'translate-x-0' : '-translate-x-full'
+          'panel-dark fixed inset-y-3 left-3 z-40 flex w-[248px] flex-col rounded-[34px] transition-transform duration-200 ease-out lg:inset-y-4 lg:left-4 lg:translate-x-0',
+          mobileOpen ? 'translate-x-0' : '-translate-x-[120%]'
         )}
       >
         {sidebarContent}

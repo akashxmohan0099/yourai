@@ -1,7 +1,29 @@
-import type { ElementType } from 'react'
+import { PageIntro } from '@/components/dashboard/page-intro'
 import { requireTenant } from '@/lib/auth/guards'
 import { createClient } from '@/lib/supabase/server'
-import { Target, Sparkles, UserPlus, MessageCircle, FileCheck, Trophy, XCircle } from 'lucide-react'
+import type { ElementType } from 'react'
+import {
+  FileCheck,
+  MessageCircle,
+  Sparkles,
+  Target,
+  Trophy,
+  UserPlus,
+  XCircle,
+} from 'lucide-react'
+
+interface LeadRow {
+  id: string
+  status: string
+  score?: number | null
+  source_channel?: string | null
+  created_at: string
+  clients?: {
+    name?: string | null
+    email?: string | null
+    phone?: string | null
+  } | null
+}
 
 export default async function LeadsPage() {
   const { tenantId } = await requireTenant()
@@ -15,12 +37,12 @@ export default async function LeadsPage() {
     .limit(50)
 
   const statusColors: Record<string, string> = {
-    new: 'bg-[#f5f5f7] text-[#424245]',
-    contacted: 'bg-amber-100 text-amber-700',
-    qualified: 'bg-[#f5f5f7] text-[#424245]',
-    proposal: 'bg-[#d2d2d7] text-[#1d1d1f]',
-    won: 'bg-emerald-100 text-emerald-700',
-    lost: 'bg-red-100 text-red-700',
+    new: 'chip chip-accent',
+    contacted: 'chip',
+    qualified: 'chip chip-teal',
+    proposal: 'chip',
+    won: 'chip chip-teal',
+    lost: 'chip chip-accent',
   }
 
   const statusIcons: Record<string, ElementType> = {
@@ -33,85 +55,73 @@ export default async function LeadsPage() {
   }
 
   const statuses = ['new', 'contacted', 'qualified', 'proposal', 'won', 'lost']
+  const leadRows = (leads || []) as LeadRow[]
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-semibold text-[#1d1d1f] mb-1">Leads</h1>
-        <p className="text-[#86868b]">Track and convert potential customers</p>
-      </div>
+    <div className="dashboard-stack">
+      <PageIntro
+        eyebrow="Lead pipeline"
+        title="See who is warming up and who is ready to close."
+        description="Lead status, score, and source now live in the same visual language as the rest of the workspace."
+        aside={
+          <div className="panel-muted w-full rounded-[28px] p-5 lg:max-w-sm">
+            <p className="text-sm font-semibold text-[var(--ink)]">{leadRows.length} tracked leads</p>
+            <p className="mt-2 text-xs text-[var(--ink-faint)]">
+              Automatically captured from conversations and customer activity.
+            </p>
+          </div>
+        }
+      />
 
-      {/* Pipeline summary */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+      <div className="grid gap-4 sm:grid-cols-3 xl:grid-cols-6">
         {statuses.map((status) => {
-          const count = (leads || []).filter((l: any) => l.status === status).length
+          const count = leadRows.filter((lead) => lead.status === status).length
           const Icon = statusIcons[status] || Target
           return (
-            <div key={status} className="bg-white rounded-2xl border border-[#d2d2d7] shadow-sm p-4 text-center">
-              <div className="flex justify-center mb-2">
-                <div className={`p-2 rounded-xl ${status === 'won' ? 'bg-emerald-50' : status === 'lost' ? 'bg-red-50' : 'bg-[#f5f5f7]'}`}>
-                  <Icon className={`w-4 h-4 ${status === 'won' ? 'text-emerald-600' : status === 'lost' ? 'text-red-500' : 'text-[#1d1d1f]'}`} />
-                </div>
+            <div key={status} className="panel rounded-[28px] px-4 py-5 text-center">
+              <div className="mx-auto flex h-11 w-11 items-center justify-center rounded-2xl bg-white/55">
+                <Icon className="h-4 w-4 text-[var(--accent)]" />
               </div>
-              <p className="text-2xl font-semibold text-[#1d1d1f]">{count}</p>
-              <p className="text-xs text-[#86868b] capitalize mt-0.5">{status}</p>
+              <p className="mt-4 text-3xl font-semibold text-[var(--ink)]">{count}</p>
+              <p className="mt-1 text-xs uppercase tracking-[0.16em] text-[var(--ink-faint)]">{status}</p>
             </div>
           )
         })}
       </div>
 
-      <div className="bg-white rounded-2xl border border-[#d2d2d7] shadow-sm">
-        {!leads || leads.length === 0 ? (
-          <div className="px-6 py-16 text-center">
-            <div className="w-12 h-12 rounded-2xl bg-[#f5f5f7] flex items-center justify-center mx-auto mb-4">
-              <Target className="w-6 h-6 text-[#86868b]" />
+      <div className="panel dashboard-table rounded-[32px]">
+        {leadRows.length === 0 ? (
+          <div className="dashboard-empty">
+            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-[26px] bg-[rgba(208,109,79,0.12)]">
+              <Target className="h-7 w-7 text-[var(--accent)]" />
             </div>
-            <p className="text-[#424245] font-medium mb-1">No leads yet</p>
-            <p className="text-sm text-[#86868b]">Leads are automatically captured from conversations</p>
+            <p className="mt-5 text-lg font-semibold text-[var(--ink)]">No leads yet</p>
+            <p className="mt-2 text-sm leading-7 text-[var(--ink-soft)]">
+              Leads are automatically captured from qualifying conversations.
+            </p>
           </div>
         ) : (
-          <div className="divide-y divide-[#f5f5f7]">
-            <div className="grid grid-cols-6 gap-4 px-6 py-3.5 text-xs font-medium text-[#86868b] uppercase tracking-wide bg-[#f5f5f7] rounded-t-2xl">
-              <span>Name</span>
-              <span>Contact</span>
-              <span>Source</span>
-              <span>Status</span>
-              <span>Score</span>
-              <span>Added</span>
-            </div>
-            {leads.map((lead: any) => (
-              <div key={lead.id} className="grid grid-cols-6 gap-4 px-6 py-4 items-center hover:bg-[#f5f5f7] transition-colors">
-                <span className="text-sm font-medium text-[#1d1d1f]">
-                  {lead.clients?.name || 'Unknown'}
-                </span>
-                <span className="text-sm text-[#424245] truncate">
-                  {lead.clients?.email || lead.clients?.phone || '--'}
-                </span>
-                <span className="text-sm text-[#86868b] capitalize">
-                  {lead.source_channel?.replace('_', ' ') || '--'}
-                </span>
-                <span>
-                  <span className={`inline-block px-3 py-1 text-xs font-medium rounded-full ${statusColors[lead.status] || 'bg-[#f5f5f7] text-[#424245]'}`}>
-                    {lead.status}
-                  </span>
-                </span>
-                <span className="text-sm text-[#424245]">
-                  <span className={`inline-flex items-center justify-center w-8 h-8 rounded-full text-xs font-semibold ${
-                    (lead.score || 0) >= 70
-                      ? 'bg-emerald-100 text-emerald-700'
-                      : (lead.score || 0) >= 40
-                      ? 'bg-amber-100 text-amber-700'
-                      : 'bg-[#f5f5f7] text-[#424245]'
-                  }`}>
-                    {lead.score || 0}
-                  </span>
-                </span>
-                <span className="text-sm text-[#86868b]">
-                  {new Date(lead.created_at).toLocaleDateString()}
-                </span>
+          leadRows.map((lead) => (
+            <div key={lead.id} className="dashboard-table-row grid gap-3 px-6 py-5 lg:grid-cols-6 lg:items-center">
+              <div>
+                <p className="text-sm font-semibold text-[var(--ink)]">{lead.clients?.name || 'Unknown'}</p>
+                <p className="mt-1 text-xs text-[var(--ink-faint)]">{lead.clients?.email || lead.clients?.phone || '--'}</p>
               </div>
-            ))}
-          </div>
+              <p className="text-sm text-[var(--ink-soft)] capitalize">
+                {lead.source_channel?.replace('_', ' ') || '--'}
+              </p>
+              <div>
+                <span className={statusColors[lead.status] || 'chip'}>{lead.status}</span>
+              </div>
+              <div>
+                <span className="chip">{lead.score || 0} score</span>
+              </div>
+              <p className="text-sm text-[var(--ink-soft)]">
+                {new Date(lead.created_at).toLocaleDateString()}
+              </p>
+              <p className="text-sm text-[var(--ink-faint)]">Captured for follow-up</p>
+            </div>
+          ))
         )}
       </div>
     </div>

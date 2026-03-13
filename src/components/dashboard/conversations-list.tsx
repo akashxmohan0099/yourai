@@ -1,10 +1,16 @@
 'use client'
 
-import { useEffect, useState, type ElementType } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { formatRelativeTime } from '@/lib/utils'
+import {
+  FileText,
+  Mail,
+  MessageSquare,
+  Phone,
+  Smartphone,
+} from 'lucide-react'
 import Link from 'next/link'
-import { MessageSquare, Phone, Mail, Smartphone, PhoneCall, FileText } from 'lucide-react'
+import { useEffect, useState, type ElementType } from 'react'
 
 interface Conversation {
   id: string
@@ -39,18 +45,18 @@ const channelLabels: Record<string, string> = {
 }
 
 const channelBadgeStyles: Record<string, string> = {
-  web_chat: 'bg-blue-50 text-blue-700 border border-blue-100',
-  voice: 'bg-emerald-50 text-emerald-700 border border-emerald-100',
-  sms: 'bg-amber-50 text-amber-700 border border-amber-100',
-  email: 'bg-purple-50 text-purple-700 border border-purple-100',
-  whatsapp: 'bg-green-50 text-green-700 border border-green-100',
+  web_chat: 'chip chip-teal',
+  voice: 'chip chip-accent',
+  sms: 'chip',
+  email: 'chip',
+  whatsapp: 'chip chip-teal',
 }
 
 const channelIconColors: Record<string, string> = {
-  web_chat: 'bg-blue-50 text-blue-600',
-  voice: 'bg-emerald-50 text-emerald-600',
-  email: 'bg-purple-50 text-purple-600',
-  sms: 'bg-amber-50 text-amber-600',
+  web_chat: 'bg-[rgba(43,114,107,0.12)] text-[var(--teal)]',
+  voice: 'bg-[rgba(208,109,79,0.12)] text-[var(--accent)]',
+  email: 'bg-[rgba(36,28,23,0.08)] text-[var(--ink)]',
+  sms: 'bg-[rgba(201,146,64,0.12)] text-[var(--gold)]',
 }
 
 const filterTabs = [
@@ -100,117 +106,108 @@ export function ConversationsList({
   const filtered =
     activeFilter === 'all'
       ? conversations
-      : conversations.filter((c) => c.channel === activeFilter)
+      : conversations.filter((conversation) => conversation.channel === activeFilter)
 
-  const channelCounts = conversations.reduce<Record<string, number>>((acc, c) => {
-    acc[c.channel] = (acc[c.channel] || 0) + 1
+  const channelCounts = conversations.reduce<Record<string, number>>((acc, conversation) => {
+    acc[conversation.channel] = (acc[conversation.channel] || 0) + 1
     return acc
   }, {})
 
   if (conversations.length === 0) {
     return (
-      <div className="bg-white rounded-2xl border border-[#d2d2d7] shadow-sm p-12 text-center">
-        <div className="w-14 h-14 bg-[#f5f5f7] rounded-2xl flex items-center justify-center mx-auto mb-4">
-          <MessageSquare className="w-7 h-7 text-[#86868b]" />
+      <div className="panel rounded-[32px]">
+        <div className="dashboard-empty">
+          <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-[26px] bg-[rgba(208,109,79,0.12)]">
+            <MessageSquare className="h-7 w-7 text-[var(--accent)]" />
+          </div>
+          <p className="mt-5 text-lg font-semibold text-[var(--ink)]">No conversations yet</p>
+          <p className="mt-2 text-sm leading-7 text-[var(--ink-soft)]">
+            They&apos;ll appear here once customers start chatting, calling, emailing, or texting.
+          </p>
         </div>
-        <p className="text-[#424245] font-medium text-base">No conversations yet</p>
-        <p className="text-sm text-[#86868b] mt-1">
-          They&apos;ll appear here once customers start chatting, calling, or texting
-        </p>
       </div>
     )
   }
 
   return (
-    <div className="space-y-4">
-      {/* Channel filter tabs */}
-      <div className="flex items-center gap-2 overflow-x-auto pb-1">
+    <div className="dashboard-stack">
+      <div className="flex flex-wrap items-center gap-2">
         {filterTabs.map((tab) => {
           const count = tab.key === 'all' ? conversations.length : (channelCounts[tab.key] || 0)
           const isActive = activeFilter === tab.key
-          if (tab.key !== 'all' && count === 0) return null
           const Icon = tab.icon
+          if (tab.key !== 'all' && count === 0) return null
           return (
             <button
               key={tab.key}
               onClick={() => setActiveFilter(tab.key)}
-              className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-colors whitespace-nowrap ${
-                isActive
-                  ? 'bg-[#1d1d1f] text-white'
-                  : 'bg-white text-[#424245] border border-[#d2d2d7] hover:bg-[#f5f5f7]'
+              className={`inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-medium ${
+                isActive ? 'btn-primary' : 'btn-secondary'
               }`}
             >
-              <Icon className="w-4 h-4" />
+              <Icon className="h-4 w-4" />
               {tab.label}
-              <span className={`text-xs ${isActive ? 'text-white/70' : 'text-[#86868b]'}`}>
-                {count}
-              </span>
+              <span className={`${isActive ? 'text-white/75' : 'text-[var(--ink-faint)]'}`}>{count}</span>
             </button>
           )
         })}
       </div>
 
-      {/* Conversations list */}
-      <div className="bg-white rounded-2xl border border-[#d2d2d7] shadow-sm divide-y divide-[#f5f5f7]">
+      <div className="panel dashboard-table rounded-[32px]">
         {filtered.length === 0 ? (
-          <div className="px-6 py-12 text-center">
-            <p className="text-[#86868b] text-sm">No conversations in this channel</p>
+          <div className="dashboard-empty">
+            <p className="text-sm text-[var(--ink-soft)]">No conversations in this channel.</p>
           </div>
         ) : (
-          filtered.map((conv) => {
-            const ChannelIcon = channelIcons[conv.channel] || MessageSquare
-            const iconColor = channelIconColors[conv.channel] || 'bg-[#f5f5f7] text-[#424245]'
-            const badgeStyle = channelBadgeStyles[conv.channel] || 'bg-[#f5f5f7] text-[#424245]'
-            const label = channelLabels[conv.channel] || conv.channel
-            const metadata = conv.metadata || {}
-            const hasSummary = conv.channel === 'voice' && !!metadata.summary
+          filtered.map((conversation) => {
+            const ChannelIcon = channelIcons[conversation.channel] || MessageSquare
+            const iconColor = channelIconColors[conversation.channel] || 'bg-white/50 text-[var(--ink)]'
+            const badgeStyle = channelBadgeStyles[conversation.channel] || 'chip'
+            const label = channelLabels[conversation.channel] || conversation.channel
+            const metadata = conversation.metadata || {}
+            const hasSummary = conversation.channel === 'voice' && !!metadata.summary
             const duration = metadata.durationSeconds as number | undefined
 
             return (
               <Link
-                key={conv.id}
-                href={`/conversations/${conv.id}`}
-                className="flex items-center gap-4 px-6 py-4 hover:bg-[#f5f5f7] transition-colors"
+                key={conversation.id}
+                href={`/conversations/${conversation.id}`}
+                className="dashboard-table-row flex items-center gap-4 px-5 py-5 sm:px-6"
               >
-                <div className={`p-2.5 rounded-xl ${iconColor}`}>
-                  <ChannelIcon className="w-4 h-4" />
+                <div className={`flex h-12 w-12 items-center justify-center rounded-2xl ${iconColor}`}>
+                  <ChannelIcon className="h-4 w-4" />
                 </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2.5 flex-wrap">
-                    <p className="text-sm font-semibold text-[#1d1d1f]">
-                      {conv.clients?.name || 'Anonymous'}
+                <div className="min-w-0 flex-1">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <p className="text-sm font-semibold text-[var(--ink)]">
+                      {conversation.clients?.name || 'Anonymous'}
                     </p>
-                    {/* Channel badge */}
-                    <span className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${badgeStyle}`}>
-                      {label}
-                    </span>
-                    {/* Status badge */}
+                    <span className={badgeStyle}>{label}</span>
                     <span
-                      className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${
-                        conv.status === 'active'
-                          ? 'bg-emerald-50 text-emerald-700'
-                          : conv.status === 'escalated'
-                          ? 'bg-red-50 text-red-700'
-                          : 'bg-[#f5f5f7] text-[#424245]'
+                      className={`chip capitalize ${
+                        conversation.status === 'active'
+                          ? 'chip-teal'
+                          : conversation.status === 'escalated'
+                          ? 'chip-accent'
+                          : ''
                       }`}
                     >
-                      {conv.status}
+                      {conversation.status}
                     </span>
                   </div>
-                  <div className="flex items-center gap-2 mt-1">
-                    <p className="text-sm text-[#86868b]">
-                      {formatRelativeTime(conv.updated_at)}
-                    </p>
-                    {conv.channel === 'voice' && duration && (
-                      <span className="text-xs text-[#86868b]">
-                        · {Math.floor(duration / 60)}:{String(duration % 60).padStart(2, '0')} call
+                  <div className="mt-2 flex flex-wrap items-center gap-2 text-sm text-[var(--ink-faint)]">
+                    <span>{formatRelativeTime(conversation.updated_at)}</span>
+                    {conversation.channel === 'voice' && duration ? (
+                      <span>
+                        {Math.floor(duration / 60)}:{String(duration % 60).padStart(2, '0')} call
                       </span>
-                    )}
-                    {hasSummary && (
-                      <span className="flex items-center gap-1 text-xs text-[#86868b]">
-                        · <FileText className="w-3 h-3" /> Summary
+                    ) : null}
+                    {hasSummary ? (
+                      <span className="inline-flex items-center gap-1">
+                        <FileText className="h-3 w-3" />
+                        Summary
                       </span>
-                    )}
+                    ) : null}
                   </div>
                 </div>
               </Link>

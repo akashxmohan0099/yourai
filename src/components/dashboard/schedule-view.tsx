@@ -1,10 +1,15 @@
 'use client'
 
-import { useState } from 'react'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
+import { useState } from 'react'
 
 interface ScheduleViewProps {
-  initialAppointments: any[]
+  initialAppointments: Array<{
+    id: string
+    title: string
+    status: string
+    starts_at: string
+  }>
 }
 
 const DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
@@ -16,16 +21,16 @@ export function ScheduleView({ initialAppointments }: ScheduleViewProps) {
   const currentWeekStart = new Date(today)
   currentWeekStart.setDate(today.getDate() - today.getDay() + weekOffset * 7)
 
-  const days = Array.from({ length: 7 }, (_, i) => {
+  const days = Array.from({ length: 7 }, (_, index) => {
     const date = new Date(currentWeekStart)
-    date.setDate(currentWeekStart.getDate() + i)
+    date.setDate(currentWeekStart.getDate() + index)
     return date
   })
 
   const getAppointmentsForDay = (date: Date) => {
     const dateStr = date.toISOString().split('T')[0]
     return initialAppointments.filter(
-      (a: any) => a.starts_at.startsWith(dateStr) && a.status !== 'cancelled'
+      (appointment) => appointment.starts_at.startsWith(dateStr) && appointment.status !== 'cancelled'
     )
   }
 
@@ -35,70 +40,61 @@ export function ScheduleView({ initialAppointments }: ScheduleViewProps) {
   }
 
   return (
-    <div className="bg-white rounded-2xl border border-[#d2d2d7] shadow-sm">
-      <div className="px-6 py-5 border-b border-[#d2d2d7] flex items-center justify-between">
-        <h2 className="text-lg font-semibold text-[#1d1d1f]">This Week</h2>
+    <div className="panel rounded-[32px]">
+      <div className="flex items-center justify-between gap-4 border-b border-[var(--line)] px-6 py-5">
+        <div>
+          <p className="kicker">Week map</p>
+          <h2 className="mt-2 text-2xl font-semibold text-[var(--ink)]">Weekly schedule</h2>
+        </div>
         <div className="flex items-center gap-2">
-          <button
-            onClick={() => setWeekOffset(weekOffset - 1)}
-            className="p-2 hover:bg-[#f5f5f7] rounded-xl transition-colors"
-          >
-            <ChevronLeft className="w-5 h-5 text-[#424245]" />
+          <button onClick={() => setWeekOffset(weekOffset - 1)} className="btn-secondary h-11 w-11 rounded-2xl px-0">
+            <ChevronLeft className="h-4 w-4" />
           </button>
-          <button
-            onClick={() => setWeekOffset(0)}
-            className="px-4 py-1.5 text-sm font-medium text-[#1d1d1f] hover:bg-[#f5f5f7] rounded-xl transition-colors"
-          >
-            Today
+          <button onClick={() => setWeekOffset(0)} className="btn-secondary">
+            This week
           </button>
-          <button
-            onClick={() => setWeekOffset(weekOffset + 1)}
-            className="p-2 hover:bg-[#f5f5f7] rounded-xl transition-colors"
-          >
-            <ChevronRight className="w-5 h-5 text-[#424245]" />
+          <button onClick={() => setWeekOffset(weekOffset + 1)} className="btn-secondary h-11 w-11 rounded-2xl px-0">
+            <ChevronRight className="h-4 w-4" />
           </button>
         </div>
       </div>
 
-      <div className="grid grid-cols-7 divide-x divide-[#f5f5f7]">
-        {days.map((date, i) => {
-          const dayAppts = getAppointmentsForDay(date)
+      <div className="grid grid-cols-1 gap-px bg-[var(--line)] p-px lg:grid-cols-7">
+        {days.map((date, index) => {
+          const dayAppointments = getAppointmentsForDay(date)
           return (
-            <div key={i} className="min-h-[160px]">
-              <div
-                className={`px-2 py-3 text-center border-b border-[#f5f5f7] ${
-                  isToday(date) ? 'bg-[#f5f5f7]' : ''
-                }`}
-              >
-                <p className="text-xs font-medium text-[#86868b] uppercase tracking-wide">{DAYS[i]}</p>
-                <p
-                  className={`text-base font-semibold mt-0.5 ${
-                    isToday(date) ? 'text-[#1d1d1f]' : 'text-[#1d1d1f]'
-                  }`}
-                >
-                  {date.getDate()}
+            <div
+              key={index}
+              className={`min-h-[220px] px-3 py-4 ${
+                isToday(date) ? 'bg-[rgba(255,249,242,0.92)]' : 'bg-white/55'
+              }`}
+            >
+              <div className="rounded-[22px] bg-white/45 px-3 py-3 text-center">
+                <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--ink-faint)]">
+                  {DAYS[index]}
                 </p>
+                <p className="mt-1 text-2xl font-semibold text-[var(--ink)]">{date.getDate()}</p>
               </div>
-              <div className="p-1.5 space-y-1.5">
-                {dayAppts.map((apt: any) => {
+              <div className="mt-3 space-y-2">
+                {dayAppointments.map((appointment) => {
                   const statusColor =
-                    apt.status === 'confirmed'
-                      ? 'bg-emerald-50 border-emerald-200 text-emerald-800'
-                      : apt.status === 'pending'
-                      ? 'bg-amber-50 border-amber-200 text-amber-800'
-                      : 'bg-[#f5f5f7] border-[#d2d2d7] text-[#424245]'
+                    appointment.status === 'confirmed'
+                      ? 'chip chip-teal'
+                      : appointment.status === 'pending'
+                      ? 'chip chip-accent'
+                      : 'chip'
                   return (
-                    <div
-                      key={apt.id}
-                      className={`px-2 py-1.5 rounded-lg text-xs border ${statusColor}`}
-                    >
-                      <p className="font-semibold truncate">
-                        {new Date(apt.starts_at).toLocaleTimeString([], {
-                          hour: 'numeric',
-                          minute: '2-digit',
-                        })}
-                      </p>
-                      <p className="truncate opacity-80">{apt.title}</p>
+                    <div key={appointment.id} className="rounded-[22px] bg-white/55 px-3 py-3">
+                      <div className="flex items-center justify-between gap-3">
+                        <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--ink-faint)]">
+                          {new Date(appointment.starts_at).toLocaleTimeString([], {
+                            hour: 'numeric',
+                            minute: '2-digit',
+                          })}
+                        </p>
+                        <span className={statusColor}>{appointment.status}</span>
+                      </div>
+                      <p className="mt-3 text-sm font-semibold text-[var(--ink)]">{appointment.title}</p>
                     </div>
                   )
                 })}

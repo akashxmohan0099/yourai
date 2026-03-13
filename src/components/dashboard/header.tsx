@@ -1,8 +1,8 @@
 'use client'
 
 import { createClient } from '@/lib/supabase/client'
+import { LogOut, ShieldCheck } from 'lucide-react'
 import { useRouter } from 'next/navigation'
-import { LogOut } from 'lucide-react'
 
 interface HeaderProps {
   displayName: string
@@ -20,24 +20,33 @@ export function DashboardHeader({ displayName, role }: HeaderProps) {
   }
 
   return (
-    <header className="sticky top-0 z-20 bg-white border-b border-[#d2d2d7] px-6 py-2.5">
-      <div className="flex items-center justify-between">
-        <div className="lg:hidden w-10" />
-        <div className="flex-1" />
-        <div className="flex items-center gap-3">
-          <div className="text-right mr-1">
-            <p className="text-sm font-medium text-[#1d1d1f] leading-tight">{displayName}</p>
-            <span className="inline-block mt-0.5 text-[11px] font-medium text-[#86868b] capitalize bg-[#f5f5f7] px-2 py-0.5 rounded-full">
-              {role}
-            </span>
+    <header className="sticky top-0 z-20 px-4 pt-4 sm:px-6 lg:pl-[17.5rem] lg:pr-7">
+      <div className="panel flex items-center justify-between rounded-[30px] px-4 py-3 sm:px-5">
+        <div className="hidden min-w-0 items-center gap-3 lg:flex">
+          <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[rgba(43,114,107,0.12)]">
+            <ShieldCheck className="h-5 w-5 text-[var(--teal)]" />
           </div>
-          <div className="w-px h-6 bg-[#d2d2d7]" />
+          <div className="min-w-0">
+            <p className="text-sm font-semibold text-[var(--ink)]">Operational workspace</p>
+            <p className="truncate text-xs uppercase tracking-[0.18em] text-[var(--ink-faint)]">
+              Conversations, approvals, revenue, and service flow
+            </p>
+          </div>
+        </div>
+
+        <div className="lg:hidden w-12" />
+
+        <div className="ml-auto flex items-center gap-3">
+          <div className="text-right">
+            <p className="text-sm font-semibold text-[var(--ink)]">{displayName}</p>
+            <span className="status-pill mt-1 capitalize">{role}</span>
+          </div>
           <button
             onClick={handleSignOut}
-            className="p-2 text-[#86868b] hover:text-[#424245] rounded-xl hover:bg-[#f5f5f7] transition-colors duration-100"
+            className="btn-secondary h-11 w-11 rounded-2xl px-0"
             title="Sign out"
           >
-            <LogOut className="w-4 h-4" />
+            <LogOut className="h-4 w-4" />
           </button>
         </div>
       </div>

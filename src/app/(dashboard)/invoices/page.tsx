@@ -1,6 +1,17 @@
+import { PageIntro } from '@/components/dashboard/page-intro'
 import { requireTenant } from '@/lib/auth/guards'
 import { createClient } from '@/lib/supabase/server'
-import { Receipt, DollarSign, AlertTriangle, CheckCircle, FileText } from 'lucide-react'
+import { AlertTriangle, CheckCircle, DollarSign, FileText, Receipt } from 'lucide-react'
+
+interface InvoiceRow {
+  id: string
+  invoice_number: string
+  total_cents: number
+  status: string
+  due_date?: string | null
+  created_at: string
+  clients?: { name?: string | null } | null
+}
 
 export default async function InvoicesPage() {
   const { tenantId } = await requireTenant()
@@ -14,114 +25,103 @@ export default async function InvoicesPage() {
     .limit(50)
 
   const statusColors: Record<string, string> = {
-    draft: 'bg-[#f5f5f7] text-[#424245]',
-    sent: 'bg-[#f5f5f7] text-[#1d1d1f]',
-    paid: 'bg-emerald-100 text-emerald-700',
-    overdue: 'bg-red-100 text-red-700',
-    cancelled: 'bg-[#f5f5f7] text-[#86868b]',
+    draft: 'chip',
+    sent: 'chip',
+    paid: 'chip chip-teal',
+    overdue: 'chip chip-accent',
+    cancelled: 'chip',
   }
 
-  // Calculate totals
-  const totalOutstanding = (invoices || [])
-    .filter((i: any) => ['sent', 'overdue'].includes(i.status))
-    .reduce((sum: number, i: any) => sum + i.total_cents, 0)
-  const totalPaid = (invoices || [])
-    .filter((i: any) => i.status === 'paid')
-    .reduce((sum: number, i: any) => sum + i.total_cents, 0)
-  const overdueCount = (invoices || []).filter((i: any) => i.status === 'overdue').length
+  const invoiceRows = (invoices || []) as InvoiceRow[]
+  const totalOutstanding = invoiceRows
+    .filter((invoice) => ['sent', 'overdue'].includes(invoice.status))
+    .reduce((sum, invoice) => sum + invoice.total_cents, 0)
+  const totalPaid = invoiceRows
+    .filter((invoice) => invoice.status === 'paid')
+    .reduce((sum, invoice) => sum + invoice.total_cents, 0)
+  const overdueCount = invoiceRows.filter((invoice) => invoice.status === 'overdue').length
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-semibold text-[#1d1d1f] mb-1">Invoices</h1>
-        <p className="text-[#86868b]">{invoices?.length || 0} invoices total</p>
+    <div className="dashboard-stack">
+      <PageIntro
+        eyebrow="Invoice ledger"
+        title="Revenue status without spreadsheet fatigue."
+        description="Outstanding, paid, overdue, and draft invoices are now easier to scan in the same visual rhythm as the rest of the product."
+        aside={
+          <div className="panel-muted w-full rounded-[28px] p-5 lg:max-w-sm">
+            <p className="text-sm font-semibold text-[var(--ink)]">{invoiceRows.length} invoice records</p>
+            <p className="mt-2 text-xs text-[var(--ink-faint)]">Monitor cash collection and overdue risk from one place.</p>
+          </div>
+        }
+      />
+
+      <div className="grid gap-4 md:grid-cols-3">
+        {[
+          {
+            label: 'Outstanding',
+            value: `$${(totalOutstanding / 100).toFixed(2)}`,
+            icon: DollarSign,
+          },
+          {
+            label: 'Paid',
+            value: `$${(totalPaid / 100).toFixed(2)}`,
+            icon: CheckCircle,
+          },
+          {
+            label: 'Overdue',
+            value: String(overdueCount),
+            icon: AlertTriangle,
+          },
+        ].map((card) => (
+          <div key={card.label} className="panel rounded-[28px] px-5 py-5">
+            <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-white/55">
+              <card.icon className="h-4 w-4 text-[var(--accent)]" />
+            </div>
+            <p className="mt-4 text-3xl font-semibold text-[var(--ink)]">{card.value}</p>
+            <p className="mt-1 text-sm text-[var(--ink-faint)]">{card.label}</p>
+          </div>
+        ))}
       </div>
 
-      {/* Summary cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <div className="bg-white rounded-2xl border border-[#d2d2d7] shadow-sm p-6">
-          <div className="flex items-center gap-3 mb-3">
-            <div className="p-2 rounded-xl bg-amber-50">
-              <DollarSign className="w-4 h-4 text-amber-600" />
+      <div className="panel dashboard-table rounded-[32px]">
+        {invoiceRows.length === 0 ? (
+          <div className="dashboard-empty">
+            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-[26px] bg-[rgba(208,109,79,0.12)]">
+              <Receipt className="h-7 w-7 text-[var(--accent)]" />
             </div>
-            <span className="text-sm text-[#86868b]">Outstanding</span>
-          </div>
-          <p className="text-2xl font-semibold text-amber-600">${(totalOutstanding / 100).toFixed(2)}</p>
-        </div>
-        <div className="bg-white rounded-2xl border border-[#d2d2d7] shadow-sm p-6">
-          <div className="flex items-center gap-3 mb-3">
-            <div className="p-2 rounded-xl bg-emerald-50">
-              <CheckCircle className="w-4 h-4 text-emerald-600" />
-            </div>
-            <span className="text-sm text-[#86868b]">Paid</span>
-          </div>
-          <p className="text-2xl font-semibold text-emerald-600">${(totalPaid / 100).toFixed(2)}</p>
-        </div>
-        <div className="bg-white rounded-2xl border border-[#d2d2d7] shadow-sm p-6">
-          <div className="flex items-center gap-3 mb-3">
-            <div className="p-2 rounded-xl bg-red-50">
-              <AlertTriangle className="w-4 h-4 text-red-500" />
-            </div>
-            <span className="text-sm text-[#86868b]">Overdue</span>
-          </div>
-          <p className="text-2xl font-semibold text-red-600">{overdueCount}</p>
-        </div>
-      </div>
-
-      <div className="bg-white rounded-2xl border border-[#d2d2d7] shadow-sm">
-        {!invoices || invoices.length === 0 ? (
-          <div className="px-6 py-16 text-center">
-            <div className="w-12 h-12 rounded-2xl bg-[#f5f5f7] flex items-center justify-center mx-auto mb-4">
-              <Receipt className="w-6 h-6 text-[#86868b]" />
-            </div>
-            <p className="text-[#424245] font-medium mb-1">No invoices yet</p>
-            <p className="text-sm text-[#86868b]">
-              Invoices will appear here once you create them
+            <p className="mt-5 text-lg font-semibold text-[var(--ink)]">No invoices yet</p>
+            <p className="mt-2 text-sm leading-7 text-[var(--ink-soft)]">
+              Invoices will appear here once they are created.
             </p>
           </div>
         ) : (
-          <div className="divide-y divide-[#f5f5f7]">
-            <div className="grid grid-cols-7 gap-4 px-6 py-3.5 text-xs font-medium text-[#86868b] uppercase tracking-wide bg-[#f5f5f7] rounded-t-2xl">
-              <span>Invoice #</span>
-              <span>Client</span>
-              <span>Total</span>
-              <span>Status</span>
-              <span>Due Date</span>
-              <span>Created</span>
-              <span className="text-right">PDF</span>
-            </div>
-            {invoices.map((inv: any) => (
-              <div key={inv.id} className="grid grid-cols-7 gap-4 px-6 py-4 items-center hover:bg-[#f5f5f7] transition-colors">
-                <span className="text-sm font-medium text-[#1d1d1f]">{inv.invoice_number}</span>
-                <span className="text-sm text-[#424245]">{inv.clients?.name || 'N/A'}</span>
-                <span className="text-sm font-semibold text-[#1d1d1f]">
-                  ${(inv.total_cents / 100).toFixed(2)}
-                </span>
-                <span>
-                  <span className={`inline-block px-3 py-1 text-xs font-medium rounded-full ${statusColors[inv.status] || 'bg-[#f5f5f7] text-[#424245]'}`}>
-                    {inv.status}
-                  </span>
-                </span>
-                <span className="text-sm text-[#86868b]">
-                  {inv.due_date ? new Date(inv.due_date).toLocaleDateString() : '--'}
-                </span>
-                <span className="text-sm text-[#86868b]">
-                  {new Date(inv.created_at).toLocaleDateString()}
-                </span>
-                <span className="text-right">
-                  <a
-                    href={`/api/invoices/${inv.id}/pdf`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center justify-center w-8 h-8 rounded-lg text-[#86868b] hover:text-[#1d1d1f] hover:bg-[#f5f5f7] transition-colors"
-                    title="View PDF"
-                  >
-                    <FileText className="w-4 h-4" />
-                  </a>
-                </span>
+          invoiceRows.map((invoice) => (
+            <div key={invoice.id} className="dashboard-table-row grid gap-3 px-6 py-5 lg:grid-cols-[1fr_1fr_1fr_1fr_1fr_auto] lg:items-center">
+              <div>
+                <p className="text-sm font-semibold text-[var(--ink)]">{invoice.invoice_number}</p>
+                <p className="mt-1 text-xs text-[var(--ink-faint)]">{invoice.clients?.name || 'N/A'}</p>
               </div>
-            ))}
-          </div>
+              <p className="text-sm font-semibold text-[var(--ink)]">${(invoice.total_cents / 100).toFixed(2)}</p>
+              <div>
+                <span className={statusColors[invoice.status] || 'chip'}>{invoice.status}</span>
+              </div>
+              <p className="text-sm text-[var(--ink-soft)]">
+                {invoice.due_date ? new Date(invoice.due_date).toLocaleDateString() : '--'}
+              </p>
+              <p className="text-sm text-[var(--ink-faint)]">
+                {new Date(invoice.created_at).toLocaleDateString()}
+              </p>
+              <a
+                href={`/api/invoices/${invoice.id}/pdf`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="btn-secondary h-11 w-11 rounded-2xl px-0"
+                title="View PDF"
+              >
+                <FileText className="h-4 w-4" />
+              </a>
+            </div>
+          ))
         )}
       </div>
     </div>

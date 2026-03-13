@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { createBusinessSquad, buildSquadPayload } from '@/lib/vapi/squads'
+import { buildVapiServerConfig, getVapiWebhookSecret } from '@/lib/vapi/server-auth'
 
 const VAPI_API_BASE = 'https://api.vapi.ai'
 
@@ -67,13 +68,19 @@ export async function POST(request: NextRequest) {
 
     const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
     const serverUrl = `${appUrl}/api/voice/respond`
+    if (!getVapiWebhookSecret()) {
+      return NextResponse.json(
+        { error: 'VAPI_WEBHOOK_SECRET must be configured before creating a squad.' },
+        { status: 500 }
+      )
+    }
 
     // Build the squad
     const squad = createBusinessSquad({
       businessName: config.business_name || 'Our Business',
       businessType: config.business_type || 'service business',
       services: serviceNames,
-      serverUrl,
+      server: buildVapiServerConfig(serverUrl),
     })
 
     const payload = buildSquadPayload(squad)

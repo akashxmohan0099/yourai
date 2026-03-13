@@ -1,8 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { processVapiEvent } from '@/lib/background/process-vapi-event'
+import { verifyVapiRequest } from '@/lib/vapi/server-auth'
 
 export async function POST(request: NextRequest) {
   try {
+    const authError = verifyVapiRequest(request)
+    if (authError) {
+      return authError
+    }
+
     const body = await request.json()
 
     // Fire and forget — don't block the webhook response

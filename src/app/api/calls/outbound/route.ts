@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import { buildVapiServerFields, getVapiWebhookSecret } from '@/lib/vapi/server-auth'
 
 const VAPI_API_BASE = 'https://api.vapi.ai'
 
@@ -127,6 +128,13 @@ export async function POST(request: NextRequest) {
 
     // Create outbound call via Vapi
     const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
+    if (!getVapiWebhookSecret()) {
+      return NextResponse.json(
+        { error: 'VAPI_WEBHOOK_SECRET must be configured before placing outbound calls.' },
+        { status: 500 }
+      )
+    }
+    const serverFields = buildVapiServerFields(`${appUrl}/api/voice/respond`)
 
     const callPayload = {
       assistantId: config.vapi_assistant_id,
@@ -137,7 +145,7 @@ export async function POST(request: NextRequest) {
       },
       assistantOverrides: {
         firstMessage,
-        serverUrl: `${appUrl}/api/voice/respond`,
+        ...serverFields,
       },
     }
 

@@ -1,14 +1,27 @@
 'use client'
 
+import { Calendar, Plus, StickyNote, Tag, X } from 'lucide-react'
 import { useState } from 'react'
-import { Plus, Tag, StickyNote, Calendar, X } from 'lucide-react'
 
 interface ClientDetailEnhancedProps {
-  client: any
-  notes: any[]
-  tags: any[]
-  appointments: any[]
-  tenantId: string
+  client: { id: string }
+  notes: Array<{
+    id: string
+    note: string
+    source?: string | null
+    created_at: string
+  }>
+  tags: Array<{
+    id: string
+    tag: string
+  }>
+  appointments: Array<{
+    id: string
+    title: string
+    status: string
+    starts_at: string
+    services?: { name?: string | null } | null
+  }>
 }
 
 export function ClientDetailEnhanced({
@@ -16,7 +29,6 @@ export function ClientDetailEnhanced({
   notes,
   tags,
   appointments,
-  tenantId,
 }: ClientDetailEnhancedProps) {
   const [newNote, setNewNote] = useState('')
   const [newTag, setNewTag] = useState('')
@@ -74,136 +86,118 @@ export function ClientDetailEnhanced({
   }
 
   return (
-    <div className="space-y-6">
-      {/* Tags */}
-      <div className="bg-white rounded-2xl border border-[#d2d2d7] shadow-sm p-6">
-        <div className="flex items-center gap-2 mb-4">
-          <Tag className="w-4 h-4 text-[#86868b]" />
-          <h3 className="text-sm font-semibold text-[#1d1d1f]">Tags</h3>
+    <div className="dashboard-stack">
+      <div className="panel rounded-[32px] px-6 py-6">
+        <div className="flex items-center gap-3">
+          <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[rgba(208,109,79,0.12)]">
+            <Tag className="h-4 w-4 text-[var(--accent)]" />
+          </div>
+          <h3 className="text-xl font-semibold text-[var(--ink)]">Tags</h3>
         </div>
-        <div className="flex flex-wrap gap-2 mb-4">
-          {tags.map((t: any) => (
-            <span
-              key={t.id}
-              className="inline-flex items-center gap-1.5 rounded-full px-3 py-1 bg-[#f5f5f7] text-[#424245] text-sm font-medium"
-            >
-              {t.tag}
-              <button
-                onClick={() => removeTag(t.id)}
-                className="hover:text-red-500 transition-colors"
-              >
-                <X className="w-3 h-3" />
+        <div className="mt-5 flex flex-wrap gap-2">
+          {tags.map((tag) => (
+            <span key={tag.id} className="chip">
+              {tag.tag}
+              <button onClick={() => removeTag(tag.id)} className="text-[var(--ink-faint)] hover:text-[var(--error)]">
+                <X className="h-3 w-3" />
               </button>
             </span>
           ))}
-          {tags.length === 0 && (
-            <span className="text-sm text-[#86868b]">No tags yet</span>
-          )}
+          {tags.length === 0 ? <span className="text-sm text-[var(--ink-soft)]">No tags yet.</span> : null}
         </div>
-        <div className="flex gap-2">
+        <div className="mt-5 flex gap-2">
           <input
             type="text"
             value={newTag}
             onChange={(e) => setNewTag(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && addTag()}
             placeholder="Add tag..."
-            className="flex-1 px-3 py-2 text-sm border border-[#d2d2d7] rounded-xl focus:ring-2 focus:ring-[#0066CC] focus:border-transparent text-[#1d1d1f] placeholder:text-[#86868b]"
+            className="field-input flex-1 text-sm"
           />
-          <button
-            onClick={addTag}
-            disabled={saving}
-            className="bg-[#1d1d1f] hover:bg-black text-white rounded-xl py-2 px-3 disabled:opacity-50 transition-colors"
-          >
-            <Plus className="w-4 h-4" />
+          <button onClick={addTag} disabled={saving} className="btn-primary h-12 w-12 rounded-2xl px-0">
+            <Plus className="h-4 w-4" />
           </button>
         </div>
       </div>
 
-      {/* Notes */}
-      <div className="bg-white rounded-2xl border border-[#d2d2d7] shadow-sm p-6">
-        <div className="flex items-center gap-2 mb-4">
-          <StickyNote className="w-4 h-4 text-[#86868b]" />
-          <h3 className="text-sm font-semibold text-[#1d1d1f]">Notes</h3>
+      <div className="panel rounded-[32px] px-6 py-6">
+        <div className="flex items-center gap-3">
+          <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[rgba(43,114,107,0.12)]">
+            <StickyNote className="h-4 w-4 text-[var(--teal)]" />
+          </div>
+          <h3 className="text-xl font-semibold text-[var(--ink)]">Notes</h3>
         </div>
-        <div className="space-y-3 mb-4">
+        <div className="mt-5 space-y-3">
           {notes.length === 0 ? (
-            <p className="text-sm text-[#86868b]">No notes yet</p>
+            <p className="text-sm text-[var(--ink-soft)]">No notes yet.</p>
           ) : (
-            notes.map((n: any) => (
-              <div
-                key={n.id}
-                className="bg-[#f5f5f7] rounded-xl px-4 py-3 text-sm"
-              >
-                <p className="text-[#424245] leading-relaxed">{n.note}</p>
-                <p className="text-xs text-[#86868b] mt-1.5">
-                  {n.source === 'ai' ? 'Added by AI' : 'Manual'} ·{' '}
-                  {new Date(n.created_at).toLocaleDateString()}
+            notes.map((note) => (
+              <div key={note.id} className="rounded-[24px] bg-white/45 px-4 py-4">
+                <p className="text-sm leading-7 text-[var(--ink-soft)]">{note.note}</p>
+                <p className="mt-2 text-xs uppercase tracking-[0.14em] text-[var(--ink-faint)]">
+                  {note.source === 'ai' ? 'Added by AI' : 'Manual'} •{' '}
+                  {new Date(note.created_at).toLocaleDateString()}
                 </p>
               </div>
             ))
           )}
         </div>
-        <div className="flex gap-2">
+        <div className="mt-5 flex gap-2">
           <textarea
             value={newNote}
             onChange={(e) => setNewNote(e.target.value)}
             placeholder="Add a note..."
             rows={2}
-            className="flex-1 px-3 py-2 text-sm border border-[#d2d2d7] rounded-xl resize-none focus:ring-2 focus:ring-[#0066CC] focus:border-transparent text-[#1d1d1f] placeholder:text-[#86868b]"
+            className="field-textarea flex-1 text-sm"
           />
           <button
             onClick={addNote}
             disabled={saving || !newNote.trim()}
-            className="bg-[#1d1d1f] hover:bg-black text-white rounded-xl py-2.5 px-5 text-sm font-medium disabled:opacity-50 self-end transition-colors"
+            className="btn-primary self-end"
           >
             Add
           </button>
         </div>
       </div>
 
-      {/* Appointments */}
-      <div className="bg-white rounded-2xl border border-[#d2d2d7] shadow-sm p-6">
-        <div className="flex items-center gap-2 mb-4">
-          <Calendar className="w-4 h-4 text-[#86868b]" />
-          <h3 className="text-sm font-semibold text-[#1d1d1f]">Appointments</h3>
+      <div className="panel rounded-[32px] px-6 py-6">
+        <div className="flex items-center gap-3">
+          <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[rgba(201,146,64,0.12)]">
+            <Calendar className="h-4 w-4 text-[var(--gold)]" />
+          </div>
+          <h3 className="text-xl font-semibold text-[var(--ink)]">Appointments</h3>
         </div>
         {appointments.length === 0 ? (
-          <p className="text-sm text-[#86868b]">No appointments</p>
+          <p className="mt-5 text-sm text-[var(--ink-soft)]">No appointments yet.</p>
         ) : (
-          <div className="space-y-2.5">
-            {appointments.map((apt: any) => (
-              <div
-                key={apt.id}
-                className="flex items-center gap-3 bg-[#f5f5f7] rounded-xl px-4 py-3"
-              >
-                <div className="min-w-[80px]">
-                  <p className="text-xs font-semibold text-[#1d1d1f]">
-                    {new Date(apt.starts_at).toLocaleDateString()}
+          <div className="mt-5 space-y-3">
+            {appointments.map((appointment) => (
+              <div key={appointment.id} className="flex flex-col gap-3 rounded-[24px] bg-white/45 px-4 py-4 sm:flex-row sm:items-center">
+                <div className="min-w-[94px]">
+                  <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[var(--ink-faint)]">
+                    {new Date(appointment.starts_at).toLocaleDateString()}
                   </p>
-                  <p className="text-xs text-[#86868b] mt-0.5">
-                    {new Date(apt.starts_at).toLocaleTimeString([], {
+                  <p className="mt-1 text-sm font-semibold text-[var(--ink)]">
+                    {new Date(appointment.starts_at).toLocaleTimeString([], {
                       hour: '2-digit',
                       minute: '2-digit',
                     })}
                   </p>
                 </div>
-                <div className="w-px h-8 bg-[#d2d2d7]" />
-                <div className="flex-1">
-                  <p className="text-sm font-medium text-[#424245]">{apt.title}</p>
-                  <p className="text-xs text-[#86868b] mt-0.5">{apt.services?.name}</p>
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm font-semibold text-[var(--ink)]">{appointment.title}</p>
+                  <p className="mt-1 text-sm text-[var(--ink-soft)]">{appointment.services?.name}</p>
                 </div>
                 <span
-                  className={`rounded-full px-3 py-1 text-xs font-medium ${
-                    apt.status === 'confirmed'
-                      ? 'bg-emerald-50 text-emerald-700'
-                      : apt.status === 'cancelled'
-                      ? 'bg-red-50 text-red-700'
-                      : apt.status === 'completed'
-                      ? 'bg-[#f5f5f7] text-[#424245]'
-                      : 'bg-[#f5f5f7] text-[#424245]'
+                  className={`chip capitalize ${
+                    appointment.status === 'confirmed'
+                      ? 'chip-teal'
+                      : appointment.status === 'cancelled'
+                      ? 'chip-accent'
+                      : ''
                   }`}
                 >
-                  {apt.status}
+                  {appointment.status}
                 </span>
               </div>
             ))}

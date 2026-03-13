@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { getVapiClient } from '@/lib/vapi/client'
+import { buildVapiServerConfig, getVapiWebhookSecret } from '@/lib/vapi/server-auth'
 
 export async function POST(request: NextRequest) {
   try {
@@ -30,12 +31,28 @@ export async function POST(request: NextRequest) {
 
     const vapi = getVapiClient()
     const updates: Record<string, unknown> = {}
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL || request.nextUrl.origin
+    const voiceServerUrl = `${appUrl}/api/voice/respond`
+    const voiceServer = buildVapiServerConfig(voiceServerUrl)
+    const configuringVoice =
+      !!assistantId || !!ownerAssistantId || !!phoneNumberId || voiceEnabled === true
+
+    if (configuringVoice && !getVapiWebhookSecret()) {
+      return NextResponse.json(
+        { error: 'VAPI_WEBHOOK_SECRET must be configured before enabling voice callbacks.' },
+        { status: 500 }
+      )
+    }
 
     // If assistantId provided, validate it exists on Vapi then save
     if (assistantId !== undefined) {
       if (assistantId) {
         try {
           await vapi.getAssistant(assistantId)
+          await vapi.updateAssistant(assistantId, {
+            server: voiceServer,
+            serverUrl: voiceServerUrl,
+          })
         } catch {
           return NextResponse.json(
             { error: 'Invalid assistant ID. Could not find assistant on Vapi.' },
@@ -51,6 +68,10 @@ export async function POST(request: NextRequest) {
       if (ownerAssistantId) {
         try {
           await vapi.getAssistant(ownerAssistantId)
+          await vapi.updateAssistant(ownerAssistantId, {
+            server: voiceServer,
+            serverUrl: voiceServerUrl,
+          })
         } catch {
           return NextResponse.json(
             { error: 'Invalid owner assistant ID. Could not find assistant on Vapi.' },
@@ -83,7 +104,16 @@ export async function POST(request: NextRequest) {
         }
 
         try {
-          await vapi.assignPhoneToAssistant(phoneNumberId, currentAssistantId)
+          await Promise.all([
+            vapi.assignPhoneToAssistant(phoneNumberId, currentAssistantId),
+            vapi.updateAssistant(currentAssistantId, {
+              server: voiceServer,
+              serverUrl: voiceServerUrl,
+            }),
+            vapi.updatePhoneNumber(phoneNumberId, {
+              server: voiceServer,
+            }),
+          ])
         } catch {
           return NextResponse.json(
             { error: 'Failed to assign phone number to assistant on Vapi.' },

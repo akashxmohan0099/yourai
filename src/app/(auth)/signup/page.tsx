@@ -1,9 +1,10 @@
 'use client'
 
 import { createClient } from '@/lib/supabase/client'
-import { useRouter } from 'next/navigation'
-import { useState } from 'react'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
+import { ArrowRight, CalendarClock, MessageSquare, Sparkles } from 'lucide-react'
+import { useState } from 'react'
 
 export default function SignupPage() {
   const [email, setEmail] = useState('')
@@ -42,8 +43,6 @@ export default function SignupPage() {
         return
       }
 
-      // Create tenant and profile via server action
-      // Server derives userId/email from the authenticated session — never trust client input
       const res = await fetch('/api/auth/setup', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -59,95 +58,151 @@ export default function SignupPage() {
 
       router.push('/onboarding')
       router.refresh()
-    } catch (err: any) {
-      setError(err.message || 'An unexpected error occurred')
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'An unexpected error occurred'
+      setError(message)
       setLoading(false)
     }
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-white px-4">
-      <div className="w-full max-w-sm">
-        <div className="text-center mb-8">
-          <span className="text-lg font-semibold tracking-tight text-[#1d1d1f]">
-            YourAI
-          </span>
-          <h1 className="mt-6 text-xl font-semibold text-[#1d1d1f]">
-            Create your account
-          </h1>
-          <p className="mt-1.5 text-sm text-[#86868b]">
-            Get started in a few minutes.
-          </p>
-        </div>
-
-        <form onSubmit={handleSignup} className="space-y-4">
-          {error && (
-            <div className="bg-red-50 border border-red-200 text-red-700 px-3 py-2.5 rounded-xl text-sm">
-              {error}
+    <div className="min-h-screen px-4 py-5 sm:px-6">
+      <div className="mx-auto grid min-h-[calc(100vh-2.5rem)] max-w-7xl gap-5 lg:grid-cols-[minmax(0,1.05fr)_minmax(26rem,0.95fr)]">
+        <section className="panel flex rounded-[36px] px-5 py-6 sm:px-7 sm:py-7 lg:px-8 lg:py-8">
+          <div className="m-auto w-full max-w-md space-y-8">
+            <div className="space-y-4">
+              <Link href="/" className="inline-flex items-center gap-3">
+                <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[rgba(43,114,107,0.12)]">
+                  <Sparkles className="h-5 w-5 text-[var(--teal)]" />
+                </div>
+                <div>
+                  <p className="text-sm font-semibold text-[var(--ink)]">YourAI</p>
+                  <p className="text-xs uppercase tracking-[0.22em] text-[var(--ink-faint)]">
+                    New workspace
+                  </p>
+                </div>
+              </Link>
+              <div>
+                <p className="kicker">Start fresh</p>
+                <h1 className="mt-3 text-4xl font-semibold text-[var(--ink)]">
+                  Build a calmer front desk.
+                </h1>
+                <p className="mt-3 text-sm leading-7 text-[var(--ink-soft)]">
+                  Set up the workspace, tell the AI how your business runs, then move into onboarding.
+                </p>
+              </div>
             </div>
-          )}
 
-          <div>
-            <label htmlFor="businessName" className="block text-sm font-medium text-[#1d1d1f] mb-1.5">
-              Business name
-            </label>
-            <input
-              id="businessName"
-              type="text"
-              required
-              value={businessName}
-              onChange={(e) => setBusinessName(e.target.value)}
-              className="block w-full rounded-xl border border-[#d2d2d7] px-3 py-2 text-sm text-[#1d1d1f] focus:border-[#0066CC] focus:outline-none focus:ring-1 focus:ring-[#0066CC] placeholder:text-[#86868b]"
-              placeholder="Your business name"
-            />
+            <form onSubmit={handleSignup} className="space-y-5">
+              {error ? (
+                <div className="rounded-[24px] border border-red-200 bg-red-50/80 px-4 py-3 text-sm text-red-700">
+                  {error}
+                </div>
+              ) : null}
+
+              <div>
+                <label htmlFor="businessName" className="field-label">
+                  Business name
+                </label>
+                <input
+                  id="businessName"
+                  type="text"
+                  required
+                  value={businessName}
+                  onChange={(e) => setBusinessName(e.target.value)}
+                  className="field-input"
+                  placeholder="Acme Dental Studio"
+                />
+              </div>
+
+              <div>
+                <label htmlFor="email" className="field-label">
+                  Email
+                </label>
+                <input
+                  id="email"
+                  type="email"
+                  required
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="field-input"
+                  placeholder="you@business.com"
+                />
+              </div>
+
+              <div>
+                <label htmlFor="password" className="field-label">
+                  Password
+                </label>
+                <input
+                  id="password"
+                  type="password"
+                  required
+                  minLength={8}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="field-input"
+                  placeholder="At least 8 characters"
+                />
+              </div>
+
+              <button type="submit" disabled={loading} className="btn-primary w-full">
+                {loading ? 'Creating workspace...' : 'Create workspace'}
+                <ArrowRight className="h-4 w-4" />
+              </button>
+            </form>
+
+            <div className="rounded-[28px] border border-[var(--line)] bg-white/45 px-5 py-4">
+              <p className="text-sm leading-7 text-[var(--ink-soft)]">
+                Already operating with YourAI?{' '}
+                <Link href="/login" className="font-semibold text-[var(--accent)]">
+                  Sign in here
+                </Link>
+                .
+              </p>
+            </div>
+          </div>
+        </section>
+
+        <section className="panel-dark hidden rounded-[36px] px-8 py-8 lg:flex lg:flex-col lg:justify-between">
+          <div className="max-w-xl space-y-5">
+            <span className="eyebrow-stack border-white/10 bg-white/5 text-[#e6d7c8]">
+              Setup path
+            </span>
+            <h2 className="text-5xl font-semibold leading-[0.98] text-[var(--sidebar-ink)]">
+              Configure the assistant like an operations lead, not a prompt engineer.
+            </h2>
+            <p className="text-base leading-8 text-[#d8c9bb]">
+              The onboarding flow captures your business shape, service rhythm, approval rules, and
+              communication style before the AI starts handling customers.
+            </p>
           </div>
 
-          <div>
-            <label htmlFor="email" className="block text-sm font-medium text-[#1d1d1f] mb-1.5">
-              Email
-            </label>
-            <input
-              id="email"
-              type="email"
-              required
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="block w-full rounded-xl border border-[#d2d2d7] px-3 py-2 text-sm text-[#1d1d1f] focus:border-[#0066CC] focus:outline-none focus:ring-1 focus:ring-[#0066CC] placeholder:text-[#86868b]"
-              placeholder="you@example.com"
-            />
+          <div className="grid gap-4">
+            <div className="rounded-[28px] border border-white/10 bg-white/5 p-5">
+              <div className="flex items-center gap-3">
+                <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[rgba(208,109,79,0.24)]">
+                  <CalendarClock className="h-5 w-5 text-[#ffd9cb]" />
+                </div>
+                <div>
+                  <p className="text-sm font-semibold text-[var(--sidebar-ink)]">Business setup</p>
+                  <p className="text-xs text-[#cfbfaf]">Hours, services, channels, and constraints</p>
+                </div>
+              </div>
+            </div>
+            <div className="rounded-[28px] border border-white/10 bg-white/5 p-5">
+              <div className="flex items-center gap-3">
+                <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[rgba(43,114,107,0.24)]">
+                  <MessageSquare className="h-5 w-5 text-[#b7efe7]" />
+                </div>
+                <div>
+                  <p className="text-sm font-semibold text-[var(--sidebar-ink)]">Voice and tone</p>
+                  <p className="text-xs text-[#cfbfaf]">Train the assistant to sound like your brand</p>
+                </div>
+              </div>
+            </div>
           </div>
-
-          <div>
-            <label htmlFor="password" className="block text-sm font-medium text-[#1d1d1f] mb-1.5">
-              Password
-            </label>
-            <input
-              id="password"
-              type="password"
-              required
-              minLength={8}
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="block w-full rounded-xl border border-[#d2d2d7] px-3 py-2 text-sm text-[#1d1d1f] focus:border-[#0066CC] focus:outline-none focus:ring-1 focus:ring-[#0066CC] placeholder:text-[#86868b]"
-              placeholder="At least 8 characters"
-            />
-          </div>
-
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full py-2 px-4 rounded-xl text-sm font-medium text-white bg-[#1d1d1f] hover:bg-black focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#0066CC] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-          >
-            {loading ? 'Creating account...' : 'Create account'}
-          </button>
-        </form>
-
-        <p className="mt-6 text-center text-sm text-[#86868b]">
-          Already have an account?{' '}
-          <Link href="/login" className="text-[#0066CC] hover:text-[#0055AA] font-medium">
-            Sign in
-          </Link>
-        </p>
+        </section>
       </div>
     </div>
   )

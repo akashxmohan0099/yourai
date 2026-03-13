@@ -5,6 +5,8 @@
  * to each other mid-call using transfer-destination-request messages.
  */
 
+import type { VapiServerConfig } from './server-auth'
+
 // ── Types ────────────────────────────────────────────────────────────
 
 export interface SquadMemberConfig {
@@ -42,6 +44,7 @@ export interface SquadMember {
       voiceId: string
     }
     serverUrl?: string
+    server?: VapiServerConfig
     transcriber?: {
       provider: string
       model?: string
@@ -60,7 +63,7 @@ export interface BusinessSquadInput {
   businessName: string
   businessType?: string
   services?: string[]
-  serverUrl: string
+  server: VapiServerConfig
   voiceProvider?: string
   voiceId?: string
 }
@@ -72,10 +75,11 @@ export function createBusinessSquad(config: BusinessSquadInput): SquadConfig {
     businessName,
     businessType = 'service business',
     services = [],
-    serverUrl,
+    server,
     voiceProvider = '11labs',
     voiceId = 'bIHbv24MWmeRgasZH58o',
   } = config
+  const serverUrl = server.url
 
   const servicesText = services.length > 0
     ? `Available services: ${services.join(', ')}.`
@@ -106,6 +110,7 @@ HANDOFF RULES:
       },
       voice: { provider: voiceProvider, voiceId },
       serverUrl,
+      server,
       transcriber: { provider: 'deepgram', model: 'nova-3', language: 'en' },
     },
     assistantDestinations: [
@@ -155,6 +160,7 @@ HANDOFF RULES:
       },
       voice: { provider: voiceProvider, voiceId },
       serverUrl,
+      server,
       transcriber: { provider: 'deepgram', model: 'nova-3', language: 'en' },
     },
     assistantDestinations: [
@@ -204,6 +210,7 @@ HANDOFF RULES:
       },
       voice: { provider: voiceProvider, voiceId },
       serverUrl,
+      server,
       transcriber: { provider: 'deepgram', model: 'nova-3', language: 'en' },
     },
     assistantDestinations: [

@@ -13,6 +13,7 @@ export interface AgentConfig {
   supabase: SupabaseClient
   clientId?: string
   clientContext?: ClientContext | null
+  allowCustomerWriteTools?: boolean
 }
 
 export async function runAgentStream(
@@ -38,7 +39,14 @@ export async function runAgentStream(
   const tools =
     config.mode === 'owner'
       ? getOwnerTools(config.context, config.supabase, config.tenantId, config.conversationId)
-      : getCustomerTools(config.context, config.supabase, config.tenantId, config.conversationId, config.clientId)
+      : getCustomerTools(
+          config.context,
+          config.supabase,
+          config.tenantId,
+          config.conversationId,
+          config.clientId,
+          config.allowCustomerWriteTools ?? true
+        )
 
   const result = streamText({
     model: anthropic('claude-sonnet-4-20250514'),
@@ -90,7 +98,14 @@ export async function runAgentSync(
   const tools =
     config.mode === 'owner'
       ? getOwnerTools(config.context, config.supabase, config.tenantId, config.conversationId)
-      : getCustomerTools(config.context, config.supabase, config.tenantId, config.conversationId, config.clientId)
+      : getCustomerTools(
+          config.context,
+          config.supabase,
+          config.tenantId,
+          config.conversationId,
+          config.clientId,
+          config.allowCustomerWriteTools ?? true
+        )
 
   const result = await generateText({
     model: anthropic('claude-sonnet-4-20250514'),

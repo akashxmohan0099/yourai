@@ -1,16 +1,16 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
-import { createClient } from '@/lib/supabase/client'
 import { BasicInfoStep } from '@/components/onboarding/basic-info-step'
 import { FeaturesStep } from '@/components/onboarding/features-step'
-import { TellAiStep } from '@/components/onboarding/tell-ai-step'
 import { SummaryStep } from '@/components/onboarding/summary-step'
-import { Check } from 'lucide-react'
-import { cn } from '@/lib/utils'
+import { TellAiStep } from '@/components/onboarding/tell-ai-step'
 import type { BusinessTypeTemplate, FeatureKey } from '@/lib/onboarding/business-type-templates'
 import { getTemplateById } from '@/lib/onboarding/business-type-templates'
+import { createClient } from '@/lib/supabase/client'
+import { cn } from '@/lib/utils'
+import { Check, Sparkles } from 'lucide-react'
+import { useRouter } from 'next/navigation'
+import { useEffect, useState } from 'react'
 
 const STEPS = [
   { id: 1, name: 'Basics', description: 'Tell us about your business' },
@@ -18,6 +18,14 @@ const STEPS = [
   { id: 3, name: 'Teach AI', description: 'Tell our AI about your business' },
   { id: 4, name: 'Review', description: 'Review and launch' },
 ]
+
+interface OnboardingProfile {
+  tenant_id: string
+  tenants?: {
+    status?: string
+    business_type?: string | null
+  } | null
+}
 
 export default function OnboardingPage() {
   const [currentStep, setCurrentStep] = useState(1)
@@ -30,7 +38,9 @@ export default function OnboardingPage() {
 
   useEffect(() => {
     async function loadTenant() {
-      const { data: { user } } = await supabase.auth.getUser()
+      const {
+        data: { user },
+      } = await supabase.auth.getUser()
       if (!user) {
         router.push('/login')
         return
@@ -47,19 +57,20 @@ export default function OnboardingPage() {
         return
       }
 
-      if ((profile.tenants as any)?.status === 'active') {
+      const profileRow = profile as OnboardingProfile
+
+      if (profileRow.tenants?.status === 'active') {
         router.push('/dashboard')
         return
       }
 
-      // Restore template if already selected
-      const businessType = (profile.tenants as any)?.business_type
+      const businessType = profileRow.tenants?.business_type
       if (businessType) {
         const template = getTemplateById(businessType)
         if (template) setSelectedTemplate(template)
       }
 
-      setTenantId(profile.tenant_id)
+      setTenantId(profileRow.tenant_id)
       setLoading(false)
     }
     loadTenant()
@@ -95,119 +106,106 @@ export default function OnboardingPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-white">
-        <div className="animate-spin rounded-full h-6 w-6 border-2 border-[#d2d2d7] border-t-[#1d1d1f]" />
+      <div className="flex min-h-screen items-center justify-center">
+        <div className="panel flex h-20 w-20 items-center justify-center rounded-[28px]">
+          <div className="h-7 w-7 animate-spin rounded-full border-2 border-[var(--line-strong)] border-t-[var(--accent)]" />
+        </div>
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-white">
-      {/* Top bar */}
-      <div className="border-b border-[#d2d2d7]">
-        <div className="max-w-3xl mx-auto px-6 py-4 flex items-center justify-between">
-          <span className="text-lg font-semibold text-[#1d1d1f] tracking-tight">YourAI</span>
-          <span className="text-sm text-[#86868b]">Step {currentStep} of {STEPS.length}</span>
+    <div className="min-h-screen px-4 py-5 sm:px-6">
+      <div className="mx-auto max-w-6xl space-y-5">
+        <div className="panel flex flex-col gap-5 rounded-[36px] px-6 py-6 lg:flex-row lg:items-center lg:justify-between">
+          <div className="flex items-center gap-4">
+            <div className="flex h-14 w-14 items-center justify-center rounded-[24px] bg-[rgba(208,109,79,0.12)]">
+              <Sparkles className="h-6 w-6 text-[var(--accent)]" />
+            </div>
+            <div>
+              <p className="kicker">Workspace setup</p>
+              <h1 className="mt-3 text-4xl font-semibold text-[var(--ink)]">Configure the assistant like an operator.</h1>
+              <p className="mt-3 max-w-2xl text-sm leading-7 text-[var(--ink-soft)]">
+                Move through the steps, teach the assistant how your business works, then launch into the dashboard.
+              </p>
+            </div>
+          </div>
+          <div className="panel-muted rounded-[28px] px-5 py-4 lg:min-w-[15rem]">
+            <p className="text-xs uppercase tracking-[0.18em] text-[var(--ink-faint)]">Progress</p>
+            <p className="mt-2 text-2xl font-semibold text-[var(--ink)]">
+              Step {currentStep} of {STEPS.length}
+            </p>
+          </div>
         </div>
-      </div>
 
-      <div className="max-w-3xl mx-auto px-6 py-10">
-        {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-2xl font-semibold text-[#1d1d1f] tracking-tight">
-            Set up your business
-          </h1>
-          <p className="text-[#86868b] mt-1">
-            Configure your AI assistant in a few quick steps.
-          </p>
-        </div>
-
-        {/* Step indicator */}
-        <div className="flex items-start justify-between mb-10">
-          {STEPS.map((step, index) => (
-            <div key={step.id} className="flex items-center flex-1 last:flex-none">
-              <div className="flex flex-col items-center">
+        <div className="panel rounded-[36px] px-5 py-6 sm:px-6 lg:px-8">
+          <div className="mb-8 grid gap-4 md:grid-cols-4">
+            {STEPS.map((step) => (
+              <div
+                key={step.id}
+                className={cn(
+                  'rounded-[26px] border px-4 py-4 transition-colors',
+                  currentStep === step.id
+                    ? 'border-[rgba(43,114,107,0.22)] bg-[rgba(43,114,107,0.08)]'
+                    : currentStep > step.id
+                    ? 'border-[rgba(208,109,79,0.18)] bg-[rgba(208,109,79,0.08)]'
+                    : 'border-[var(--line)] bg-white/40'
+                )}
+              >
                 <div
                   className={cn(
-                    'w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium transition-colors',
-                    currentStep > step.id
-                      ? 'bg-[#1d1d1f] text-white'
-                      : currentStep === step.id
-                      ? 'bg-[#1d1d1f] text-white'
-                      : 'bg-[#f5f5f7] text-[#86868b] border border-[#d2d2d7]'
+                    'flex h-10 w-10 items-center justify-center rounded-2xl text-sm font-semibold',
+                    currentStep >= step.id
+                      ? 'bg-[linear-gradient(135deg,var(--accent),var(--teal))] text-white'
+                      : 'bg-white/70 text-[var(--ink-faint)]'
                   )}
                 >
-                  {currentStep > step.id ? (
-                    <Check className="w-4 h-4" />
-                  ) : (
-                    step.id
-                  )}
+                  {currentStep > step.id ? <Check className="h-4 w-4" /> : step.id}
                 </div>
-                <span className={cn(
-                  'text-xs mt-2 font-medium hidden sm:block',
-                  currentStep === step.id
-                    ? 'text-[#1d1d1f]'
-                    : currentStep > step.id
-                    ? 'text-[#1d1d1f]'
-                    : 'text-[#86868b]'
-                )}>
-                  {step.name}
-                </span>
+                <p className="mt-4 text-sm font-semibold text-[var(--ink)]">{step.name}</p>
+                <p className="mt-1 text-xs leading-6 text-[var(--ink-faint)]">{step.description}</p>
               </div>
-              {index < STEPS.length - 1 && (
-                <div
-                  className={cn(
-                    'flex-1 h-px mx-3 mt-4 sm:mt-4 transition-colors',
-                    currentStep > step.id ? 'bg-[#1d1d1f]' : 'bg-[#d2d2d7]'
-                  )}
-                />
-              )}
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
 
-        {/* Step content */}
-        <div className="bg-white border border-[#d2d2d7] rounded-2xl p-6 sm:p-8">
-          {currentStep === 1 && tenantId && (
-            <BasicInfoStep
-              tenantId={tenantId}
-              selectedTemplate={selectedTemplate}
-              onTemplateSelect={handleTemplateSelect}
-              onNext={handleNext}
-            />
-          )}
-          {currentStep === 2 && tenantId && (
-            <FeaturesStep
-              tenantId={tenantId}
-              selectedFeatures={selectedFeatures}
-              onFeaturesChange={setSelectedFeatures}
-              onNext={handleNext}
-              onBack={handleBack}
-            />
-          )}
-          {currentStep === 3 && tenantId && (
-            <TellAiStep
-              tenantId={tenantId}
-              template={selectedTemplate}
-              onNext={handleNext}
-              onBack={handleBack}
-            />
-          )}
-          {currentStep === 4 && tenantId && (
-            <SummaryStep
-              tenantId={tenantId}
-              template={selectedTemplate}
-              features={selectedFeatures}
-              onComplete={handleComplete}
-              onBack={handleBack}
-              onEditStep={setCurrentStep}
-            />
-          )}
+          <div className="rounded-[30px] bg-white/45 px-4 py-5 sm:px-6 sm:py-6">
+            {currentStep === 1 && tenantId ? (
+              <BasicInfoStep
+                tenantId={tenantId}
+                selectedTemplate={selectedTemplate}
+                onTemplateSelect={handleTemplateSelect}
+                onNext={handleNext}
+              />
+            ) : null}
+            {currentStep === 2 && tenantId ? (
+              <FeaturesStep
+                tenantId={tenantId}
+                selectedFeatures={selectedFeatures}
+                onFeaturesChange={setSelectedFeatures}
+                onNext={handleNext}
+                onBack={handleBack}
+              />
+            ) : null}
+            {currentStep === 3 && tenantId ? (
+              <TellAiStep
+                tenantId={tenantId}
+                template={selectedTemplate}
+                onNext={handleNext}
+                onBack={handleBack}
+              />
+            ) : null}
+            {currentStep === 4 && tenantId ? (
+              <SummaryStep
+                tenantId={tenantId}
+                template={selectedTemplate}
+                features={selectedFeatures}
+                onComplete={handleComplete}
+                onBack={handleBack}
+                onEditStep={setCurrentStep}
+              />
+            ) : null}
+          </div>
         </div>
-
-        <p className="text-center text-sm text-[#86868b] mt-6">
-          You can change these later in Settings.
-        </p>
       </div>
     </div>
   )

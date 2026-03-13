@@ -56,6 +56,16 @@ export class VapiClient {
     return res.json()
   }
 
+  async updatePhoneNumber(id: string, updates: Record<string, unknown>): Promise<unknown> {
+    const res = await fetch(`${VAPI_API_BASE}/phone-number/${id}`, {
+      method: 'PATCH',
+      headers: this.headers,
+      body: JSON.stringify(updates),
+    })
+    if (!res.ok) throw new Error(`Vapi API error: ${res.status}`)
+    return res.json()
+  }
+
   // ── Calls ──────────────────────────────────────────────────────
 
   async makeOutboundCall(assistantId: string, phoneNumberId: string, customerNumber: string): Promise<any> {

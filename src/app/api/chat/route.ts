@@ -106,7 +106,7 @@ export async function POST(request: Request) {
     // Convert UI messages to model messages
     const modelMessages = await convertToModelMessages(messages)
 
-    // Run agent — no supabase/tenantId passed to tools so customer mode is read-only
+    // Public web chat is read-only: do not expose booking or approval write tools.
     const result = await runAgentStream(
       modelMessages,
       {
@@ -117,6 +117,7 @@ export async function POST(request: Request) {
         supabase,
         clientId,
         clientContext,
+        allowCustomerWriteTools: false,
       }
     )
 

@@ -6,6 +6,7 @@ import { normalizeIncomingMessage, resolveTenantFromChannel } from '@/lib/channe
 import type { VapiServerMessage, VapiServerResponse } from '@/lib/vapi/types'
 import { ModelMessage } from 'ai'
 import { SupabaseClient } from '@supabase/supabase-js'
+import { buildVapiServerFields, verifyVapiRequest } from '@/lib/vapi/server-auth'
 
 export const maxDuration = 10 // Voice requires fast responses
 
@@ -46,6 +47,11 @@ async function isOwnerCall(
 
 export async function POST(request: NextRequest) {
   try {
+    const authError = verifyVapiRequest(request)
+    if (authError) {
+      return authError
+    }
+
     const body: VapiServerMessage = await request.json()
     const messageType = body.message?.type
 
@@ -285,6 +291,7 @@ async function handleTransferDestination(body: VapiServerMessage): Promise<NextR
   const context = await buildBusinessContext(supabase, tenantId)
   const contextBlock = formatContextForPrompt(context)
   const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
+  const serverFields = buildVapiServerFields(`${appUrl}/api/voice/respond`)
 
   const systemPrompt = `You are the ${destinationName} for ${context.businessName}. You are handling a phone call that was transferred to you.
 
@@ -307,7 +314,7 @@ ${contextBlock}`
           messages: [{ role: 'system', content: systemPrompt }],
         },
         voice: { provider: 'vapi', voiceId: 'Elliot' },
-        serverUrl: `${appUrl}/api/voice/respond`,
+        ...serverFields,
         transcriber: { provider: 'deepgram', model: 'nova-3', language: 'en' },
       },
       transferMode: 'rolling-history',
@@ -368,6 +375,7 @@ ${context.customInstructions ? `\nAdditional instructions from the business owne
 ${contextBlock}`
 
   const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
+  const serverFields = buildVapiServerFields(`${appUrl}/api/voice/respond`)
 
   return NextResponse.json({
     assistant: {
@@ -381,7 +389,7 @@ ${contextBlock}`
         ],
       },
       voice: { provider: 'vapi', voiceId: 'Elliot' },
-      serverUrl: `${appUrl}/api/voice/respond`,
+      ...serverFields,
       transcriber: { provider: 'deepgram', model: 'nova-3', language: 'en' },
     },
   })

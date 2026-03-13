@@ -72,9 +72,10 @@ export function getCustomerTools(
   supabase?: SupabaseClient,
   tenantId?: string,
   conversationId?: string,
-  clientId?: string
+  clientId?: string,
+  allowWriteTools: boolean = true
 ) {
-  // Customer tools: read-only by default, booking only when supabase is available
+  // Customer tools are read-only unless the caller explicitly enables write access.
   const tools: Record<string, any> = {
     getServices: getServicesTool(context),
     getPricing: getPricingTool(context),
@@ -83,11 +84,11 @@ export function getCustomerTools(
     checkAvailability: checkAvailabilityTool(context),
   }
 
-  if (supabase && tenantId) {
+  if (allowWriteTools && supabase && tenantId) {
     tools.createAppointment = createAppointmentTool(context, supabase, tenantId)
   }
 
-  if (supabase && tenantId && conversationId) {
+  if (allowWriteTools && supabase && tenantId && conversationId) {
     tools.requestApproval = requestApprovalTool(supabase, tenantId, conversationId, clientId)
   }
 
