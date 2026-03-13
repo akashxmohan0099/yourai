@@ -128,7 +128,7 @@ export function VoiceWidget({ tenantId, assistantId, businessName, embedded = fa
       return (
         <button
           onClick={startCall}
-          className="inline-flex items-center gap-2 px-6 py-3 bg-[var(--sidebar)] text-white rounded-xl hover:bg-[var(--sidebar-soft)] transition-all hover:scale-105 shadow-lg font-medium text-sm"
+          className="inline-flex items-center gap-2 px-6 py-3 bg-[var(--teal)] text-white rounded-xl hover:bg-[var(--teal-strong)] transition-all hover:scale-105 shadow-lg font-medium text-sm"
           aria-label={`Call ${businessName}`}
         >
           <Phone className="w-5 h-5" />
@@ -140,7 +140,7 @@ export function VoiceWidget({ tenantId, assistantId, businessName, embedded = fa
     return (
       <button
         onClick={startCall}
-        className="fixed bottom-24 right-6 w-12 h-12 bg-[var(--sidebar)] text-white rounded-full shadow-lg hover:bg-[var(--sidebar-soft)] transition-all hover:scale-105 flex items-center justify-center z-50"
+        className="fixed bottom-24 right-6 w-12 h-12 bg-[var(--teal)] text-white rounded-full shadow-lg hover:bg-[var(--teal-strong)] transition-all hover:scale-105 flex items-center justify-center z-50"
         aria-label={`Call ${businessName}`}
         title={`Call ${businessName}`}
       >

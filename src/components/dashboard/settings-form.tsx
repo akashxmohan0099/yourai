@@ -328,7 +328,7 @@ export function SettingsForm({ tenantId, tenantSlug, config }: SettingsFormProps
               onChange={(e) => setForm({ ...form, briefing_enabled: e.target.checked })}
               className="sr-only peer"
             />
-            <div className="w-11 h-6 bg-[var(--line)] peer-focus:ring-2 peer-focus:ring-[var(--teal)] rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-[var(--line)] after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[var(--sidebar)]"></div>
+            <div className="w-11 h-6 bg-[var(--line)] peer-focus:ring-2 peer-focus:ring-[var(--teal)] rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-[var(--line)] after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[var(--teal)]"></div>
           </label>
           <span className="text-sm text-[var(--ink-soft)] font-medium">Enable daily briefings</span>
         </div>
@@ -476,7 +476,7 @@ export function SettingsForm({ tenantId, tenantSlug, config }: SettingsFormProps
               onChange={(e) => setVapiVoiceEnabled(e.target.checked)}
               className="sr-only peer"
             />
-            <div className="w-11 h-6 bg-[var(--line)] peer-focus:ring-2 peer-focus:ring-[var(--teal)] rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-[var(--line)] after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[var(--sidebar)]"></div>
+            <div className="w-11 h-6 bg-[var(--line)] peer-focus:ring-2 peer-focus:ring-[var(--teal)] rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-[var(--line)] after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[var(--teal)]"></div>
           </label>
           <span className="text-sm text-[var(--ink-soft)] font-medium">Enable voice calls</span>
         </div>
@@ -598,7 +598,7 @@ export function SettingsForm({ tenantId, tenantSlug, config }: SettingsFormProps
               onChange={(e) => setSmsEnabled(e.target.checked)}
               className="sr-only peer"
             />
-            <div className="w-11 h-6 bg-[var(--line)] peer-focus:ring-2 peer-focus:ring-[var(--teal)] rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-[var(--line)] after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[var(--sidebar)]"></div>
+            <div className="w-11 h-6 bg-[var(--line)] peer-focus:ring-2 peer-focus:ring-[var(--teal)] rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-[var(--line)] after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[var(--teal)]"></div>
           </label>
           <span className="text-sm text-[var(--ink-soft)] font-medium">Enable SMS messaging</span>
         </div>

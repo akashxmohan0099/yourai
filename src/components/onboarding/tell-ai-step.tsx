@@ -243,7 +243,7 @@ export function TellAiStep({ tenantId, template, onNext, onBack }: TellAiStepPro
                 <div key={i} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
                   <div className={`max-w-[85%] px-4 py-2.5 text-sm whitespace-pre-wrap leading-relaxed ${
                     msg.role === 'user'
-                      ? 'bg-[var(--sidebar)] text-white rounded-2xl rounded-br-sm'
+                      ? 'bg-[var(--teal)] text-white rounded-2xl rounded-br-sm'
                       : 'bg-[var(--surface)] border border-[var(--line)] text-[var(--ink)] rounded-2xl rounded-bl-sm'
                   }`}>
                     {isEmpty ? (
@@ -272,7 +272,7 @@ export function TellAiStep({ tenantId, template, onNext, onBack }: TellAiStepPro
               <button
                 onClick={sendMessage}
                 disabled={sending || !input.trim()}
-                className="px-3 py-2 bg-[var(--sidebar)] text-white rounded-xl hover:bg-[var(--sidebar-soft)] disabled:opacity-40 transition-colors"
+                className="px-3 py-2 bg-[var(--teal)] text-white rounded-xl hover:bg-[var(--teal-strong)] disabled:opacity-40 transition-colors"
               >
                 <Send className="w-4 h-4" />
               </button>

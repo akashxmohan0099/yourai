@@ -8,9 +8,9 @@
   --surface-strong: #fff9f2;
   --surface-muted: #ead9c6;
   --surface-ghost: rgba(255, 244, 234, 0.6);
-  --sidebar: #1f2521;
-  --sidebar-soft: #303732;
-  --sidebar-ink: #f7ecdd;
+  --sidebar: #2b726b;
+  --sidebar-soft: #348078;
+  --sidebar-ink: #241c17;
   --ink: #241c17;
   --ink-soft: #68594d;
   --ink-faint: #918175;
@@ -106,10 +106,10 @@ pre,
 }
 
 .panel-dark {
-  border: 1px solid rgba(247, 236, 221, 0.08);
-  background: linear-gradient(180deg, rgba(31, 37, 33, 0.95), rgba(36, 43, 39, 0.92));
+  border: 1px solid rgba(43, 114, 107, 0.1);
+  background: linear-gradient(180deg, rgba(240, 247, 245, 0.95), rgba(234, 243, 240, 0.88));
   box-shadow: var(--shadow-soft);
-  color: var(--sidebar-ink);
+  color: var(--ink);
 }
 
 .panel-muted {

@@ -228,7 +228,7 @@ export function SummaryStep({ tenantId, template, features, onComplete, onBack, 
         <button
           onClick={handleLaunch}
           disabled={launching}
-          className="px-6 py-2 bg-[var(--sidebar)] text-white text-sm font-medium rounded-xl hover:bg-[var(--sidebar-soft)] disabled:opacity-50 transition-colors inline-flex items-center gap-2"
+          className="px-6 py-2 bg-[var(--teal)] text-white text-sm font-medium rounded-xl hover:bg-[var(--teal-strong)] disabled:opacity-50 transition-colors inline-flex items-center gap-2"
         >
           <Rocket className="w-4 h-4" />
           {launching ? 'Launching...' : 'Launch your AI'}

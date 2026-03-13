@@ -107,62 +107,62 @@ export default function HomePage() {
           </section>
 
           <section className="flex flex-col gap-6">
-            <div className="panel-dark stat-glow rounded-[34px] px-6 py-7 sm:px-7">
+            <div className="panel rounded-[34px] px-6 py-7 sm:px-7">
               <div className="flex items-start justify-between gap-4">
                 <div>
-                  <p className="kicker text-[var(--sidebar-ink)] before:bg-[linear-gradient(90deg,var(--gold),transparent)]">
+                  <p className="kicker">
                     Live cockpit
                   </p>
-                  <h2 className="mt-3 text-3xl font-semibold leading-tight text-[var(--sidebar-ink)]">
+                  <h2 className="mt-3 text-3xl font-semibold leading-tight text-[var(--ink)]">
                     Real results, not AI theater
                   </h2>
                 </div>
-                <span className="chip chip-accent border-0 bg-[rgba(208,109,79,0.2)] text-[#ffd8cb]">
+                <span className="chip chip-accent">
                   Real approvals
                 </span>
               </div>
 
               <div className="mt-8 space-y-4">
-                <div className="rounded-[28px] border border-white/10 bg-white/5 p-5">
+                <div className="rounded-[28px] border border-[var(--line)] bg-white/50 p-5">
                   <div className="flex items-center justify-between gap-4">
                     <div>
-                      <p className="text-xs uppercase tracking-[0.2em] text-[#d9cabb]">
+                      <p className="text-xs uppercase tracking-[0.2em] text-[var(--ink-faint)]">
                         Incoming voice call
                       </p>
-                      <p className="mt-2 text-xl font-semibold text-[var(--sidebar-ink)]">
+                      <p className="mt-2 text-xl font-semibold text-[var(--ink)]">
                         New booking request from Lara Nguyen
                       </p>
                     </div>
-                    <span className="chip border-white/10 bg-white/10 text-[#f6eadc]">
+                    <span className="chip chip-teal">
                       02:14
                     </span>
                   </div>
-                  <p className="mt-3 text-sm leading-7 text-[#cfc0b2]">
+                  <p className="mt-3 text-sm leading-7 text-[var(--ink-soft)]">
                     AI gathered the preferred service, offered two time slots, and flagged a price
                     exception for review.
                   </p>
                 </div>
 
                 <div className="grid gap-4 sm:grid-cols-2">
-                  <div className="rounded-[28px] border border-white/10 bg-white/5 p-5">
+                  <div className="rounded-[28px] border border-[var(--line)] bg-white/50 p-5">
                     <div className="flex items-center gap-3">
-                      <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[rgba(43,114,107,0.24)]">
-                        <Mail className="h-5 w-5 text-[#b7efe7]" />
+                      <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[rgba(43,114,107,0.12)]">
+                        <Mail className="h-5 w-5 text-[var(--teal)]" />
                       </div>
                       <div>
-                        <p className="text-sm font-semibold text-[var(--sidebar-ink)]">Morning briefing</p>
-                        <p className="text-xs text-[#cfc0b2]">Schedule, leads, and exceptions in one summary</p>
+                        <p className="text-sm font-semibold text-[var(--ink)]">Morning briefing</p>
+                        <p className="text-xs text-[var(--ink-faint)]">Schedule, leads, and exceptions in one summary</p>
                       </div>
                     </div>
                   </div>
-                  <div className="rounded-[28px] border border-white/10 bg-white/5 p-5">
+                  <div className="rounded-[28px] border border-[var(--line)] bg-white/50 p-5">
                     <div className="flex items-center gap-3">
-                      <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[rgba(208,109,79,0.24)]">
-                        <Phone className="h-5 w-5 text-[#ffd9cb]" />
+                      <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[rgba(208,109,79,0.12)]">
+                        <Phone className="h-5 w-5 text-[var(--accent)]" />
                       </div>
                       <div>
-                        <p className="text-sm font-semibold text-[var(--sidebar-ink)]">Escalation control</p>
-                        <p className="text-xs text-[#cfc0b2]">Approvals reach the owner only when rules require it</p>
+                        <p className="text-sm font-semibold text-[var(--ink)]">Escalation control</p>
+                        <p className="text-xs text-[var(--ink-faint)]">Approvals reach the owner only when rules require it</p>
                       </div>
                     </div>
                   </div>

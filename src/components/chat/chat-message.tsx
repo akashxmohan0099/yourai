@@ -22,7 +22,7 @@ export function ChatMessage({ message }: ChatMessageProps) {
       <div
         className={cn(
           'w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0',
-          isUser ? 'bg-[var(--sidebar)]' : 'bg-[var(--line)]'
+          isUser ? 'bg-[var(--teal)]' : 'bg-[var(--line)]'
         )}
       >
         {isUser ? (
@@ -35,7 +35,7 @@ export function ChatMessage({ message }: ChatMessageProps) {
         className={cn(
           'max-w-[80%] px-4 py-2.5 rounded-2xl text-sm leading-relaxed',
           isUser
-            ? 'bg-[var(--sidebar)] text-white rounded-br-md'
+            ? 'bg-[var(--teal)] text-white rounded-br-md'
             : 'bg-[var(--surface-muted)] text-[var(--ink)] border border-[var(--line)] rounded-bl-md shadow-sm'
         )}
       >

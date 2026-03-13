@@ -25,7 +25,6 @@ export function buildVapiServerConfig(url: string): VapiServerConfig {
 
 export function buildVapiServerFields(url: string) {
   return {
-    serverUrl: url,
     server: buildVapiServerConfig(url),
   }
 }

@@ -166,37 +166,37 @@ export default function SignupPage() {
 
         <section className="panel-dark hidden rounded-[36px] px-8 py-8 lg:flex lg:flex-col lg:justify-between">
           <div className="max-w-xl space-y-5">
-            <span className="eyebrow-stack border-white/10 bg-white/5 text-[#e6d7c8]">
+            <span className="eyebrow-stack">
               Setup path
             </span>
-            <h2 className="text-5xl font-semibold leading-[0.98] text-[var(--sidebar-ink)]">
+            <h2 className="text-5xl font-semibold leading-[0.98] text-[var(--ink)]">
               Configure like an operator, not a prompt engineer.
             </h2>
-            <p className="text-base leading-8 text-[#d8c9bb]">
+            <p className="text-base leading-8 text-[var(--ink-soft)]">
               Onboarding captures your services, rules, and tone before AI starts handling customers.
             </p>
           </div>
 
           <div className="grid gap-4">
-            <div className="rounded-[28px] border border-white/10 bg-white/5 p-5">
+            <div className="rounded-[28px] border border-[var(--line)] bg-white/50 p-5">
               <div className="flex items-center gap-3">
-                <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[rgba(208,109,79,0.24)]">
-                  <CalendarClock className="h-5 w-5 text-[#ffd9cb]" />
+                <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[rgba(208,109,79,0.12)]">
+                  <CalendarClock className="h-5 w-5 text-[var(--accent)]" />
                 </div>
                 <div>
-                  <p className="text-sm font-semibold text-[var(--sidebar-ink)]">Business setup</p>
-                  <p className="text-xs text-[#cfbfaf]">Hours, services, channels, and constraints</p>
+                  <p className="text-sm font-semibold text-[var(--ink)]">Business setup</p>
+                  <p className="text-xs text-[var(--ink-faint)]">Hours, services, channels, and constraints</p>
                 </div>
               </div>
             </div>
-            <div className="rounded-[28px] border border-white/10 bg-white/5 p-5">
+            <div className="rounded-[28px] border border-[var(--line)] bg-white/50 p-5">
               <div className="flex items-center gap-3">
-                <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[rgba(43,114,107,0.24)]">
-                  <MessageSquare className="h-5 w-5 text-[#b7efe7]" />
+                <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[rgba(43,114,107,0.12)]">
+                  <MessageSquare className="h-5 w-5 text-[var(--teal)]" />
                 </div>
                 <div>
-                  <p className="text-sm font-semibold text-[var(--sidebar-ink)]">Voice and tone</p>
-                  <p className="text-xs text-[#cfbfaf]">Train the assistant to sound like your brand</p>
+                  <p className="text-sm font-semibold text-[var(--ink)]">Voice and tone</p>
+                  <p className="text-xs text-[var(--ink-faint)]">Train the assistant to sound like your brand</p>
                 </div>
               </div>
             </div>

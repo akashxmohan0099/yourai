@@ -241,7 +241,7 @@ export function BasicInfoStep({ tenantId, selectedTemplate, onTemplateSelect, on
         <button
           type="submit"
           disabled={saving || !form.business_name || !selectedTemplate}
-          className="px-6 py-2 bg-[var(--sidebar)] text-white text-sm font-medium rounded-xl hover:bg-[var(--sidebar-soft)] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          className="px-6 py-2 bg-[var(--teal)] text-white text-sm font-medium rounded-xl hover:bg-[var(--teal-strong)] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
         >
           {saving ? 'Saving...' : 'Continue'}
         </button>

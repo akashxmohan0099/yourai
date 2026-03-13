@@ -39,41 +39,41 @@ export default function LoginPage() {
       <div className="mx-auto grid min-h-[calc(100vh-2.5rem)] max-w-7xl gap-5 lg:grid-cols-[minmax(0,1.08fr)_minmax(25rem,0.92fr)]">
         <section className="panel-dark hidden rounded-[36px] px-8 py-8 lg:flex lg:flex-col lg:justify-between">
           <div className="flex items-center gap-3">
-            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-white/10">
-              <Sparkles className="h-5 w-5 text-[#ffe6d8]" />
+            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[rgba(208,109,79,0.12)]">
+              <Sparkles className="h-5 w-5 text-[var(--accent)]" />
             </div>
             <div>
-              <p className="text-sm font-semibold text-[var(--sidebar-ink)]">YourAI</p>
-              <p className="text-xs uppercase tracking-[0.22em] text-[#cfbfaf]">Operator access</p>
+              <p className="text-sm font-semibold text-[var(--ink)]">YourAI</p>
+              <p className="text-xs uppercase tracking-[0.22em] text-[var(--ink-faint)]">Operator access</p>
             </div>
           </div>
 
           <div className="max-w-xl space-y-6">
-            <span className="eyebrow-stack border-white/10 bg-white/5 text-[#e6d7c8]">
+            <span className="eyebrow-stack">
               Existing workspace
             </span>
             <div className="space-y-4">
-              <h1 className="text-5xl font-semibold leading-[0.98] text-[var(--sidebar-ink)]">
+              <h1 className="text-5xl font-semibold leading-[0.98] text-[var(--ink)]">
                 Welcome back to your workspace.
               </h1>
-              <p className="max-w-lg text-base leading-8 text-[#d8c9bb]">
+              <p className="max-w-lg text-base leading-8 text-[var(--ink-soft)]">
                 Pick up conversations, review bookings, and handle approvals — all in one place.
               </p>
             </div>
           </div>
 
           <div className="grid gap-4 sm:grid-cols-2">
-            <div className="rounded-[28px] border border-white/10 bg-white/5 p-5">
-              <ShieldCheck className="h-5 w-5 text-[#b7efe7]" />
-              <p className="mt-4 text-lg font-semibold text-[var(--sidebar-ink)]">Security-first</p>
-              <p className="mt-2 text-sm leading-7 text-[#cfbfaf]">
+            <div className="rounded-[28px] border border-[var(--line)] bg-white/50 p-5">
+              <ShieldCheck className="h-5 w-5 text-[var(--teal)]" />
+              <p className="mt-4 text-lg font-semibold text-[var(--ink)]">Security-first</p>
+              <p className="mt-2 text-sm leading-7 text-[var(--ink-soft)]">
                 Approvals, channels, and audit trails in one place.
               </p>
             </div>
-            <div className="rounded-[28px] border border-white/10 bg-white/5 p-5">
-              <KeyRound className="h-5 w-5 text-[#ffd9cb]" />
-              <p className="mt-4 text-lg font-semibold text-[var(--sidebar-ink)]">Operator speed</p>
-              <p className="mt-2 text-sm leading-7 text-[#cfbfaf]">
+            <div className="rounded-[28px] border border-[var(--line)] bg-white/50 p-5">
+              <KeyRound className="h-5 w-5 text-[var(--accent)]" />
+              <p className="mt-4 text-lg font-semibold text-[var(--ink)]">Operator speed</p>
+              <p className="mt-2 text-sm leading-7 text-[var(--ink-soft)]">
                 Your workspace — fast, focused, operational.
               </p>
             </div>

@@ -42,7 +42,7 @@ export function ChatWidget({ tenantSlug, businessName, embedded = false }: ChatW
     return (
       <button
         onClick={() => setIsOpen(true)}
-        className="fixed bottom-6 right-6 w-14 h-14 bg-[var(--sidebar)] text-white rounded-full shadow-lg hover:bg-[var(--sidebar-soft)] transition-all hover:scale-105 flex items-center justify-center z-50"
+        className="fixed bottom-6 right-6 w-14 h-14 bg-[var(--teal)] text-white rounded-full shadow-lg hover:bg-[var(--teal-strong)] transition-all hover:scale-105 flex items-center justify-center z-50"
         aria-label="Open chat"
       >
         <MessageCircle className="w-6 h-6" />
@@ -57,15 +57,15 @@ export function ChatWidget({ tenantSlug, businessName, embedded = false }: ChatW
   return (
     <div className={containerClass}>
       {/* Header */}
-      <div className="flex items-center justify-between px-5 py-4 bg-[var(--sidebar)] text-white rounded-t-2xl">
+      <div className="flex items-center justify-between px-5 py-4 bg-[var(--teal)] text-white rounded-t-2xl">
         <div>
           <h3 className="font-semibold text-sm">{businessName}</h3>
-          <p className="text-xs text-[var(--ink-faint)]">AI Assistant</p>
+          <p className="text-xs text-white/70">AI Assistant</p>
         </div>
         {!embedded && (
           <button
             onClick={() => setIsOpen(false)}
-            className="p-1.5 hover:bg-[var(--sidebar-soft)] rounded-xl transition-colors"
+            className="p-1.5 hover:bg-[var(--teal-strong)] rounded-xl transition-colors"
             aria-label="Close chat"
           >
             <X className="w-4 h-4" />
@@ -112,7 +112,7 @@ export function ChatWidget({ tenantSlug, businessName, embedded = false }: ChatW
           <button
             type="submit"
             disabled={isLoading || !input.trim()}
-            className="px-3 py-2.5 bg-[var(--sidebar)] text-white rounded-xl hover:bg-[var(--sidebar-soft)] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            className="px-3 py-2.5 bg-[var(--teal)] text-white rounded-xl hover:bg-[var(--teal-strong)] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             aria-label="Send message"
           >
             <Send className="w-4 h-4" />

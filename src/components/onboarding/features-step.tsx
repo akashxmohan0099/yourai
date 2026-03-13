@@ -109,7 +109,7 @@ export function FeaturesStep({ tenantId, selectedFeatures, onFeaturesChange, onN
                 <div className={cn(
                   'w-4 h-4 rounded border flex items-center justify-center flex-shrink-0 mt-0.5 transition-colors',
                   isSelected
-                    ? 'border-[var(--ink)] bg-[var(--sidebar)]'
+                    ? 'border-[var(--teal)] bg-[var(--teal)]'
                     : 'border-[var(--line)]'
                 )}>
                   {isSelected && <Icons.Check className="w-3 h-3 text-white" />}
@@ -136,7 +136,7 @@ export function FeaturesStep({ tenantId, selectedFeatures, onFeaturesChange, onN
         <button
           onClick={handleSubmit}
           disabled={saving}
-          className="px-6 py-2 bg-[var(--sidebar)] text-white text-sm font-medium rounded-xl hover:bg-[var(--sidebar-soft)] disabled:opacity-50 transition-colors"
+          className="px-6 py-2 bg-[var(--teal)] text-white text-sm font-medium rounded-xl hover:bg-[var(--teal-strong)] disabled:opacity-50 transition-colors"
         >
           {saving ? 'Saving...' : 'Continue'}
         </button>

@@ -30,11 +30,17 @@ export async function GET(request: NextRequest) {
       try {
         const vapi = getVapiClient()
         const call = await vapi.getCall(callId)
+        let duration: number | undefined
+        if (call.createdAt && call.endedAt) {
+          duration = Math.round(
+            (new Date(call.endedAt).getTime() - new Date(call.createdAt).getTime()) / 1000
+          )
+        }
         return NextResponse.json({
           callId: call.id,
           callStatus: call.status,
           endedReason: call.endedReason,
-          duration: call.duration,
+          duration,
         })
       } catch {
         return NextResponse.json({ callStatus: 'unknown' })
