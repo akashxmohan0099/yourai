@@ -1,10 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/admin'
-import { buildBusinessContext, buildClientContext } from '@/lib/ai/context-builder'
+import { buildBusinessContext, buildClientContext, formatContextForPrompt } from '@/lib/ai/context-builder'
 import { runAgentSync } from '@/lib/ai/agent'
 import { normalizeIncomingMessage, resolveTenantFromChannel } from '@/lib/channels/normalizer'
 import type { VapiServerMessage, VapiServerResponse } from '@/lib/vapi/types'
-import { createBusinessSquad, findSquadMember } from '@/lib/vapi/squads'
 import { ModelMessage } from 'ai'
 import { SupabaseClient } from '@supabase/supabase-js'
 
@@ -217,7 +216,6 @@ async function handleTransferDestination(body: VapiServerMessage): Promise<NextR
     })
   }
 
-  // The destination is in the message payload
   const destination = body.message?.destination
   const destinationName: string =
     destination?.assistantName ||
@@ -230,40 +228,35 @@ async function handleTransferDestination(body: VapiServerMessage): Promise<NextR
     return NextResponse.json({})
   }
 
-  // Get business config to build squad with proper context
-  const { data: config } = await supabase
-    .from('business_config')
-    .select('business_name, business_type')
-    .eq('tenant_id', tenantId)
-    .single()
-
-  const { data: services } = await supabase
-    .from('services')
-    .select('name')
-    .eq('tenant_id', tenantId)
-    .eq('is_active', true)
-
+  // Build full business context for the transfer destination
+  const context = await buildBusinessContext(supabase, tenantId)
+  const contextBlock = formatContextForPrompt(context)
   const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
-  const serverUrl = `${appUrl}/api/voice/respond`
 
-  const squad = createBusinessSquad({
-    businessName: config?.business_name || 'Our Business',
-    businessType: config?.business_type || 'service business',
-    services: (services || []).map((s: any) => s.name),
-    serverUrl,
-  })
+  const systemPrompt = `You are the ${destinationName} for ${context.businessName}. You are handling a phone call that was transferred to you.
 
-  const memberAssistant = findSquadMember(squad, destinationName)
+${context.description ? `About the business: ${context.description}` : ''}
 
-  if (!memberAssistant) {
-    console.error(`Squad member not found: "${destinationName}"`)
-    return NextResponse.json({})
-  }
+Be helpful, concise, and natural — this is a voice conversation.
+${context.customInstructions ? `\nBusiness rules: ${context.customInstructions}` : ''}
+
+--- Business Information ---
+${contextBlock}`
 
   return NextResponse.json({
     destination: {
       type: 'assistant',
-      assistant: memberAssistant,
+      assistant: {
+        name: destinationName,
+        model: {
+          provider: 'anthropic',
+          model: 'claude-sonnet-4-20250514',
+          messages: [{ role: 'system', content: systemPrompt }],
+        },
+        voice: { provider: 'vapi', voiceId: 'Elliot' },
+        serverUrl: `${appUrl}/api/voice/respond`,
+        transcriber: { provider: 'deepgram', model: 'nova-3', language: 'en' },
+      },
       transferMode: 'rolling-history',
     },
   })
@@ -278,7 +271,6 @@ async function handleAssistantRequest(body: VapiServerMessage): Promise<NextResp
 
   const tenantId = await resolveTenantFromChannel('voice', body.message)
   if (!tenantId) {
-    // Return a default fallback assistant config
     return NextResponse.json({
       assistant: {
         name: 'Default Assistant',
@@ -287,7 +279,7 @@ async function handleAssistantRequest(body: VapiServerMessage): Promise<NextResp
           provider: 'openai',
           model: 'gpt-4o-mini',
           messages: [
-            { role: 'system', content: 'You are a helpful business assistant.' },
+            { role: 'system', content: 'You are a helpful business assistant. This number is not configured yet.' },
           ],
         },
         voice: { provider: '11labs', voiceId: 'bIHbv24MWmeRgasZH58o' },
@@ -295,35 +287,50 @@ async function handleAssistantRequest(body: VapiServerMessage): Promise<NextResp
     })
   }
 
-  // Build the Greeter assistant for this tenant
-  const { data: config } = await supabase
-    .from('business_config')
-    .select('business_name, business_type')
-    .eq('tenant_id', tenantId)
-    .single()
+  // Build full business context for this tenant
+  const context = await buildBusinessContext(supabase, tenantId)
+  const contextBlock = formatContextForPrompt(context)
 
-  const { data: services } = await supabase
-    .from('services')
-    .select('name')
-    .eq('tenant_id', tenantId)
-    .eq('is_active', true)
+  const systemPrompt = `You are the AI phone assistant for ${context.businessName}${context.industry ? `, a ${context.industry} business` : ''}.
+${context.description ? `\nAbout the business: ${context.description}` : ''}
+
+You are answering a phone call on behalf of the business. Be warm, helpful, and concise — this is a voice conversation so keep responses short and natural.
+
+Your role:
+- Answer questions about services, pricing, and availability
+- Provide business hours and location information
+- Help with frequently asked questions
+- Guide callers toward booking or contacting the business
+
+${context.tone === 'casual' ? 'Be relaxed and informal.' : context.tone === 'professional' ? 'Maintain a professional tone.' : context.tone === 'formal' ? 'Use formal, respectful language.' : 'Be warm, approachable, and conversational.'}
+
+Important:
+- Only share information you have been provided about the business
+- If you don\'t know something, say so and offer to take a message
+- Never make up pricing, availability, or service details
+- Keep responses concise — this is a phone call, not a text chat
+${context.customInstructions ? `\nAdditional instructions from the business owner:\n${context.customInstructions}` : ''}
+
+--- Business Information ---
+${contextBlock}`
 
   const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
-  const serverUrl = `${appUrl}/api/voice/respond`
-
-  const squad = createBusinessSquad({
-    businessName: config?.business_name || 'Our Business',
-    businessType: config?.business_type || 'service business',
-    services: (services || []).map((s: any) => s.name),
-    serverUrl,
-  })
-
-  // Return the first member (Greeter) as the entry point
-  const greeter = squad.members[0]
 
   return NextResponse.json({
-    assistant: greeter.assistant,
-    squadId: undefined, // Let Vapi use the assigned squad if available
+    assistant: {
+      name: `${context.businessName} Assistant`,
+      firstMessage: `Hi! Thanks for calling ${context.businessName}. How can I help you today?`,
+      model: {
+        provider: 'anthropic',
+        model: 'claude-sonnet-4-20250514',
+        messages: [
+          { role: 'system', content: systemPrompt },
+        ],
+      },
+      voice: { provider: 'vapi', voiceId: 'Elliot' },
+      serverUrl: `${appUrl}/api/voice/respond`,
+      transcriber: { provider: 'deepgram', model: 'nova-3', language: 'en' },
+    },
   })
 }
 
