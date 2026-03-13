@@ -15,7 +15,10 @@ export default async function ApprovalsPage() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-bold text-gray-900">Approvals</h1>
+      <div>
+        <h1 className="text-2xl font-semibold text-stone-900 mb-1">Approvals</h1>
+        <p className="text-stone-500">Review and approve actions your AI wants to take</p>
+      </div>
       <ApprovalQueue approvals={approvals || []} tenantId={tenantId} />
     </div>
   )

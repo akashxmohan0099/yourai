@@ -35,65 +35,73 @@ export function ScheduleView({ initialAppointments }: ScheduleViewProps) {
   }
 
   return (
-    <div className="bg-white rounded-xl border border-gray-200">
-      <div className="px-5 py-4 border-b border-gray-200 flex items-center justify-between">
-        <h2 className="text-lg font-semibold text-gray-900">This Week</h2>
+    <div className="bg-white rounded-2xl border border-stone-200 shadow-sm">
+      <div className="px-6 py-5 border-b border-stone-200 flex items-center justify-between">
+        <h2 className="text-lg font-semibold text-stone-900">This Week</h2>
         <div className="flex items-center gap-2">
           <button
             onClick={() => setWeekOffset(weekOffset - 1)}
-            className="p-1 hover:bg-gray-100 rounded"
+            className="p-2 hover:bg-stone-100 rounded-xl transition-colors"
           >
-            <ChevronLeft className="w-5 h-5" />
+            <ChevronLeft className="w-5 h-5 text-stone-600" />
           </button>
           <button
             onClick={() => setWeekOffset(0)}
-            className="px-3 py-1 text-sm text-blue-600 hover:bg-blue-50 rounded"
+            className="px-4 py-1.5 text-sm font-medium text-violet-600 hover:bg-violet-50 rounded-xl transition-colors"
           >
             Today
           </button>
           <button
             onClick={() => setWeekOffset(weekOffset + 1)}
-            className="p-1 hover:bg-gray-100 rounded"
+            className="p-2 hover:bg-stone-100 rounded-xl transition-colors"
           >
-            <ChevronRight className="w-5 h-5" />
+            <ChevronRight className="w-5 h-5 text-stone-600" />
           </button>
         </div>
       </div>
 
-      <div className="grid grid-cols-7 divide-x divide-gray-100">
+      <div className="grid grid-cols-7 divide-x divide-stone-100">
         {days.map((date, i) => {
           const dayAppts = getAppointmentsForDay(date)
           return (
-            <div key={i} className="min-h-[150px]">
+            <div key={i} className="min-h-[160px]">
               <div
-                className={`px-2 py-2 text-center border-b border-gray-100 ${
-                  isToday(date) ? 'bg-blue-50' : ''
+                className={`px-2 py-3 text-center border-b border-stone-100 ${
+                  isToday(date) ? 'bg-violet-50' : ''
                 }`}
               >
-                <p className="text-xs text-gray-500">{DAYS[i]}</p>
+                <p className="text-xs font-medium text-stone-500 uppercase tracking-wide">{DAYS[i]}</p>
                 <p
-                  className={`text-sm font-semibold ${
-                    isToday(date) ? 'text-blue-600' : 'text-gray-900'
+                  className={`text-base font-semibold mt-0.5 ${
+                    isToday(date) ? 'text-violet-600' : 'text-stone-900'
                   }`}
                 >
                   {date.getDate()}
                 </p>
               </div>
-              <div className="p-1 space-y-1">
-                {dayAppts.map((apt: any) => (
-                  <div
-                    key={apt.id}
-                    className="px-1.5 py-1 bg-blue-50 rounded text-xs border border-blue-100"
-                  >
-                    <p className="font-medium text-blue-800 truncate">
-                      {new Date(apt.starts_at).toLocaleTimeString([], {
-                        hour: 'numeric',
-                        minute: '2-digit',
-                      })}
-                    </p>
-                    <p className="text-blue-600 truncate">{apt.title}</p>
-                  </div>
-                ))}
+              <div className="p-1.5 space-y-1.5">
+                {dayAppts.map((apt: any) => {
+                  const statusColor =
+                    apt.status === 'confirmed'
+                      ? 'bg-emerald-50 border-emerald-200 text-emerald-800'
+                      : apt.status === 'pending'
+                      ? 'bg-amber-50 border-amber-200 text-amber-800'
+                      : 'bg-stone-50 border-stone-200 text-stone-700'
+                  return (
+                    <div
+                      key={apt.id}
+                      className={`px-2 py-1.5 rounded-lg text-xs border ${statusColor}`}
+                    >
+                      <p className="font-semibold truncate">
+                        {new Date(apt.starts_at).toLocaleTimeString([], {
+                          hour: 'numeric',
+                          minute: '2-digit',
+                        })}
+                      </p>
+                      <p className="truncate opacity-80">{apt.title}</p>
+                    </div>
+                  )
+                })}
               </div>
             </div>
           )

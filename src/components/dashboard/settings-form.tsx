@@ -1,6 +1,7 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 
 interface SettingsFormProps {
@@ -11,8 +12,10 @@ interface SettingsFormProps {
 }
 
 export function SettingsForm({ tenantId, tenantSlug, config, services }: SettingsFormProps) {
+  const searchParams = useSearchParams()
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
+  const [nylasStatus, setNylasStatus] = useState<{ type: 'success' | 'error'; message: string } | null>(null)
   const [form, setForm] = useState({
     business_name: config?.business_name || '',
     description: config?.description || '',
@@ -28,6 +31,148 @@ export function SettingsForm({ tenantId, tenantSlug, config, services }: Setting
   })
   const supabase = createClient()
 
+  // Voice (Vapi) state
+  const [vapiAssistantId, setVapiAssistantId] = useState(
+    config?.vapi_assistant_id || '5fabbe4d-3e1d-48a4-8a98-83fd49b3c5f5'
+  )
+  const [vapiPhoneNumberId, setVapiPhoneNumberId] = useState(config?.vapi_phone_number_id || '')
+  const [vapiVoiceEnabled, setVapiVoiceEnabled] = useState(config?.voice_enabled || false)
+  const [vapiSaving, setVapiSaving] = useState(false)
+  const [vapiStatus, setVapiStatus] = useState<{
+    type: 'success' | 'error'
+    message: string
+  } | null>(null)
+  const [vapiAssistantInfo, setVapiAssistantInfo] = useState<{
+    name: string
+    model?: string
+    voice?: string
+  } | null>(null)
+
+  // SMS (Twilio) state
+  const [smsPhoneNumber, setSmsPhoneNumber] = useState(config?.twilio_phone_number || '')
+  const [smsOwnerPhone, setSmsOwnerPhone] = useState(config?.owner_notification_phone || '')
+  const [smsEnabled, setSmsEnabled] = useState(config?.sms_enabled || false)
+  const [smsSaving, setSmsSaving] = useState(false)
+  const [smsStatus, setSmsStatus] = useState<{
+    type: 'success' | 'error'
+    message: string
+  } | null>(null)
+
+  // Fetch SMS/Twilio status on mount
+  useEffect(() => {
+    fetch('/api/twilio/setup')
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.twilio_phone_number) setSmsPhoneNumber(data.twilio_phone_number)
+        if (data.owner_notification_phone) setSmsOwnerPhone(data.owner_notification_phone)
+        if (data.sms_enabled !== undefined) setSmsEnabled(data.sms_enabled)
+      })
+      .catch(() => {})
+  }, [])
+
+  const handleSaveSms = async () => {
+    setSmsSaving(true)
+    setSmsStatus(null)
+
+    try {
+      const res = await fetch('/api/twilio/setup', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          phoneNumber: smsPhoneNumber || null,
+          ownerPhone: smsOwnerPhone || null,
+        }),
+      })
+
+      const data = await res.json()
+      if (!res.ok) {
+        setSmsStatus({ type: 'error', message: data.error || 'Failed to save SMS settings' })
+      } else {
+        setSmsStatus({ type: 'success', message: 'SMS settings saved successfully!' })
+        if (data.config) {
+          setSmsEnabled(data.config.sms_enabled)
+          if (data.config.twilio_phone_number) setSmsPhoneNumber(data.config.twilio_phone_number)
+        }
+      }
+    } catch {
+      setSmsStatus({ type: 'error', message: 'Network error saving SMS settings' })
+    }
+
+    setSmsSaving(false)
+    setTimeout(() => setSmsStatus(null), 4000)
+  }
+
+  // Fetch Vapi status on mount
+  useEffect(() => {
+    fetch('/api/vapi/status')
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.vapi_assistant_id) setVapiAssistantId(data.vapi_assistant_id)
+        if (data.vapi_phone_number_id) setVapiPhoneNumberId(data.vapi_phone_number_id)
+        if (data.voice_enabled !== undefined) setVapiVoiceEnabled(data.voice_enabled)
+        if (data.assistant) setVapiAssistantInfo(data.assistant)
+      })
+      .catch(() => {})
+  }, [])
+
+  const handleSaveVoice = async () => {
+    setVapiSaving(true)
+    setVapiStatus(null)
+
+    try {
+      const res = await fetch('/api/vapi/setup', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          assistantId: vapiAssistantId || null,
+          phoneNumberId: vapiPhoneNumberId || null,
+          voiceEnabled: vapiVoiceEnabled,
+        }),
+      })
+
+      const data = await res.json()
+      if (!res.ok) {
+        setVapiStatus({ type: 'error', message: data.error || 'Failed to save voice settings' })
+      } else {
+        setVapiStatus({ type: 'success', message: 'Voice settings saved successfully!' })
+        if (data.config) {
+          setVapiVoiceEnabled(data.config.voice_enabled)
+        }
+        // Re-fetch assistant info
+        const statusRes = await fetch('/api/vapi/status')
+        const statusData = await statusRes.json()
+        if (statusData.assistant) setVapiAssistantInfo(statusData.assistant)
+      }
+    } catch {
+      setVapiStatus({ type: 'error', message: 'Network error saving voice settings' })
+    }
+
+    setVapiSaving(false)
+    setTimeout(() => setVapiStatus(null), 4000)
+  }
+
+  // Check for Nylas OAuth callback status messages
+  useEffect(() => {
+    const success = searchParams.get('success')
+    const error = searchParams.get('error')
+    if (success) {
+      setNylasStatus({ type: 'success', message: success })
+      // Reload config to reflect the new grant_id
+      supabase
+        .from('business_config')
+        .select('nylas_grant_id')
+        .eq('tenant_id', tenantId)
+        .single()
+        .then(({ data }) => {
+          if (data?.nylas_grant_id) {
+            setForm((prev) => ({ ...prev, nylas_grant_id: data.nylas_grant_id }))
+          }
+        })
+    } else if (error) {
+      setNylasStatus({ type: 'error', message: error })
+    }
+  }, [searchParams, tenantId, supabase])
+
   const handleSave = async () => {
     setSaving(true)
     setSaved(false)
@@ -42,93 +187,111 @@ export function SettingsForm({ tenantId, tenantSlug, config, services }: Setting
     setTimeout(() => setSaved(false), 3000)
   }
 
+  const inputClass = 'w-full px-4 py-2.5 border border-stone-300 rounded-xl text-sm text-stone-900 focus:ring-2 focus:ring-violet-500 focus:border-transparent transition-shadow'
+  const labelClass = 'block text-sm font-medium text-stone-700 mb-1.5'
+
   return (
     <div className="space-y-6">
       {/* Business Info */}
-      <div className="bg-white rounded-xl border border-gray-200 p-6 space-y-4">
-        <h2 className="text-lg font-semibold text-gray-900">Business Information</h2>
+      <div className="bg-white rounded-2xl border border-stone-200 shadow-sm p-6 space-y-5">
+        <div>
+          <h2 className="text-lg font-semibold text-stone-900">Business Information</h2>
+          <p className="text-sm text-stone-500 mt-0.5">Basic details about your business</p>
+        </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Business Name</label>
+            <label className={labelClass}>Business Name</label>
             <input
               value={form.business_name}
               onChange={(e) => setForm({ ...form, business_name: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className={inputClass}
+              placeholder="Your business name"
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Phone</label>
+            <label className={labelClass}>Phone</label>
             <input
               value={form.phone}
               onChange={(e) => setForm({ ...form, phone: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className={inputClass}
+              placeholder="+1 (555) 000-0000"
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+            <label className={labelClass}>Email</label>
             <input
               value={form.email}
               onChange={(e) => setForm({ ...form, email: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className={inputClass}
+              placeholder="hello@yourbusiness.com"
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Website</label>
+            <label className={labelClass}>Website</label>
             <input
               value={form.website}
               onChange={(e) => setForm({ ...form, website: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className={inputClass}
+              placeholder="https://yourbusiness.com"
             />
           </div>
           <div className="sm:col-span-2">
-            <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
+            <label className={labelClass}>Description</label>
             <textarea
               value={form.description}
               onChange={(e) => setForm({ ...form, description: e.target.value })}
               rows={3}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className={inputClass}
+              placeholder="Briefly describe what your business does..."
             />
           </div>
         </div>
       </div>
 
       {/* AI Settings */}
-      <div className="bg-white rounded-xl border border-gray-200 p-6 space-y-4">
-        <h2 className="text-lg font-semibold text-gray-900">AI Settings</h2>
+      <div className="bg-white rounded-2xl border border-stone-200 shadow-sm p-6 space-y-5">
+        <div>
+          <h2 className="text-lg font-semibold text-stone-900">AI Settings</h2>
+          <p className="text-sm text-stone-500 mt-0.5">Customize how your AI assistant communicates</p>
+        </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Tone</label>
+          <label className={labelClass}>Tone</label>
           <select
             value={form.tone}
             onChange={(e) => setForm({ ...form, tone: e.target.value })}
-            className="w-full sm:w-48 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className={`${inputClass} w-full sm:w-56`}
           >
             <option value="professional">Professional</option>
             <option value="friendly">Friendly</option>
             <option value="casual">Casual</option>
             <option value="formal">Formal</option>
           </select>
+          <p className="text-xs text-stone-400 mt-1.5">This sets the overall personality of your AI</p>
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Custom Instructions</label>
+          <label className={labelClass}>Custom Instructions</label>
           <textarea
             value={form.custom_instructions}
             onChange={(e) => setForm({ ...form, custom_instructions: e.target.value })}
             rows={4}
-            placeholder="Special instructions for your AI assistant..."
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            placeholder="Any special instructions for your AI assistant..."
+            className={inputClass}
           />
+          <p className="text-xs text-stone-400 mt-1.5">Give your AI specific guidance on how to handle conversations</p>
         </div>
       </div>
 
       {/* Daily Briefings */}
-      <div className="bg-white rounded-xl border border-gray-200 p-6 space-y-4">
-        <h2 className="text-lg font-semibold text-gray-900">Daily Briefings</h2>
-        <p className="text-sm text-gray-600">
-          Get an AI-generated morning update with your schedule, new conversations, and pending items.
-        </p>
+      <div className="bg-white rounded-2xl border border-stone-200 shadow-sm p-6 space-y-5">
+        <div>
+          <h2 className="text-lg font-semibold text-stone-900">Daily Briefings</h2>
+          <p className="text-sm text-stone-500 mt-0.5">
+            Get an AI-generated morning update with your schedule, new conversations, and pending items
+          </p>
+        </div>
 
         <div className="flex items-center gap-3">
           <label className="relative inline-flex items-center cursor-pointer">
@@ -138,76 +301,306 @@ export function SettingsForm({ tenantId, tenantSlug, config, services }: Setting
               onChange={(e) => setForm({ ...form, briefing_enabled: e.target.checked })}
               className="sr-only peer"
             />
-            <div className="w-11 h-6 bg-gray-200 peer-focus:ring-2 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+            <div className="w-11 h-6 bg-stone-200 peer-focus:ring-2 peer-focus:ring-violet-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-stone-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-violet-600"></div>
           </label>
-          <span className="text-sm text-gray-700">Enable daily briefings</span>
+          <span className="text-sm text-stone-700 font-medium">Enable daily briefings</span>
         </div>
 
         {form.briefing_enabled && (
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Briefing Time (UTC)</label>
+            <label className={labelClass}>Briefing Time (UTC)</label>
             <input
               type="time"
               value={form.briefing_time}
               onChange={(e) => setForm({ ...form, briefing_time: e.target.value })}
-              className="w-40 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className={`${inputClass} w-44`}
             />
+            <p className="text-xs text-stone-400 mt-1.5">When you want to receive your daily update</p>
           </div>
         )}
       </div>
 
-      {/* Calendar Sync */}
-      <div className="bg-white rounded-xl border border-gray-200 p-6 space-y-4">
-        <h2 className="text-lg font-semibold text-gray-900">Calendar Sync (Nylas)</h2>
-        <p className="text-sm text-gray-600">
-          Connect your calendar to sync appointments automatically.
-        </p>
+      {/* Calendar & Email Sync */}
+      <div className="bg-white rounded-2xl border border-stone-200 shadow-sm p-6 space-y-5">
+        <div>
+          <h2 className="text-lg font-semibold text-stone-900">Calendar & Email Sync (Nylas)</h2>
+          <p className="text-sm text-stone-500 mt-0.5">
+            Connect your email account to sync calendar and enable email communications
+          </p>
+        </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        {nylasStatus && (
+          <div
+            className={`px-4 py-3 rounded-xl text-sm ${
+              nylasStatus.type === 'success'
+                ? 'bg-emerald-50 text-emerald-800 border border-emerald-200'
+                : 'bg-red-50 text-red-800 border border-red-200'
+            }`}
+          >
+            {nylasStatus.message}
+          </div>
+        )}
+
+        <div>
+          {form.nylas_grant_id ? (
+            <div className="flex items-center gap-3">
+              <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium bg-emerald-100 text-emerald-800">
+                <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
+                Connected
+              </span>
+              <a
+                href="/api/nylas/auth"
+                className="text-sm text-violet-600 hover:text-violet-800 underline font-medium"
+              >
+                Reconnect Account
+              </a>
+            </div>
+          ) : (
+            <a
+              href="/api/nylas/auth"
+              className="inline-flex items-center gap-2 px-5 py-2.5 bg-violet-600 text-white rounded-xl hover:bg-violet-700 transition-colors text-sm font-medium"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+              </svg>
+              Connect Email Account
+            </a>
+          )}
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Nylas Grant ID</label>
+            <label className={labelClass}>Nylas Grant ID</label>
             <input
               value={form.nylas_grant_id}
               onChange={(e) => setForm({ ...form, nylas_grant_id: e.target.value })}
-              placeholder="Grant ID from Nylas dashboard"
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              placeholder="Auto-filled after connecting"
+              readOnly={!!form.nylas_grant_id}
+              className={`${inputClass} ${
+                form.nylas_grant_id ? 'bg-stone-50 text-stone-500' : ''
+              }`}
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Calendar ID</label>
+            <label className={labelClass}>Calendar ID</label>
             <input
               value={form.nylas_calendar_id}
               onChange={(e) => setForm({ ...form, nylas_calendar_id: e.target.value })}
               placeholder="Calendar ID to sync with"
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className={inputClass}
             />
           </div>
         </div>
       </div>
 
+      {/* Voice (Vapi) */}
+      <div className="bg-white rounded-2xl border border-stone-200 shadow-sm p-6 space-y-5">
+        <div>
+          <h2 className="text-lg font-semibold text-stone-900">Voice (Vapi)</h2>
+          <p className="text-sm text-stone-500 mt-0.5">
+            Configure AI-powered voice calls for your business using Vapi
+          </p>
+        </div>
+
+        {vapiStatus && (
+          <div
+            className={`px-4 py-3 rounded-xl text-sm ${
+              vapiStatus.type === 'success'
+                ? 'bg-emerald-50 text-emerald-800 border border-emerald-200'
+                : 'bg-red-50 text-red-800 border border-red-200'
+            }`}
+          >
+            {vapiStatus.message}
+          </div>
+        )}
+
+        {/* Status indicator */}
+        <div className="flex items-center gap-3">
+          {vapiAssistantId && vapiPhoneNumberId && vapiVoiceEnabled ? (
+            <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium bg-emerald-100 text-emerald-800">
+              <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
+              Connected
+            </span>
+          ) : vapiAssistantId ? (
+            <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium bg-amber-100 text-amber-800">
+              <span className="w-2 h-2 rounded-full bg-amber-500"></span>
+              Partially Configured
+            </span>
+          ) : (
+            <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium bg-stone-100 text-stone-600">
+              <span className="w-2 h-2 rounded-full bg-stone-400"></span>
+              Not Configured
+            </span>
+          )}
+          {vapiAssistantInfo && (
+            <span className="text-sm text-stone-500">
+              Assistant: {vapiAssistantInfo.name}
+              {vapiAssistantInfo.voice ? ` | Voice: ${vapiAssistantInfo.voice}` : ''}
+            </span>
+          )}
+        </div>
+
+        {/* Voice enabled toggle */}
+        <div className="flex items-center gap-3">
+          <label className="relative inline-flex items-center cursor-pointer">
+            <input
+              type="checkbox"
+              checked={vapiVoiceEnabled}
+              onChange={(e) => setVapiVoiceEnabled(e.target.checked)}
+              className="sr-only peer"
+            />
+            <div className="w-11 h-6 bg-stone-200 peer-focus:ring-2 peer-focus:ring-violet-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-stone-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-violet-600"></div>
+          </label>
+          <span className="text-sm text-stone-700 font-medium">Enable voice calls</span>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+          <div>
+            <label className={labelClass}>Vapi Assistant ID</label>
+            <input
+              value={vapiAssistantId}
+              onChange={(e) => setVapiAssistantId(e.target.value)}
+              placeholder="Vapi Assistant ID"
+              className={`${inputClass} font-mono`}
+            />
+            <p className="mt-1.5 text-xs text-stone-400">Found in your Vapi dashboard under Assistants</p>
+          </div>
+          <div>
+            <label className={labelClass}>Phone Number ID</label>
+            <input
+              value={vapiPhoneNumberId}
+              onChange={(e) => setVapiPhoneNumberId(e.target.value)}
+              placeholder="Vapi Phone Number ID"
+              className={`${inputClass} font-mono`}
+            />
+            <p className="mt-1.5 text-xs text-stone-400">Assign a purchased phone number from your Vapi account</p>
+          </div>
+        </div>
+
+        <button
+          onClick={handleSaveVoice}
+          disabled={vapiSaving}
+          className="bg-violet-600 hover:bg-violet-700 text-white rounded-xl py-2.5 px-5 text-sm font-medium disabled:opacity-50 transition-colors"
+        >
+          {vapiSaving ? 'Saving...' : 'Save Voice Settings'}
+        </button>
+      </div>
+
+      {/* SMS (Twilio) */}
+      <div className="bg-white rounded-2xl border border-stone-200 shadow-sm p-6 space-y-5">
+        <div>
+          <h2 className="text-lg font-semibold text-stone-900">SMS (Twilio)</h2>
+          <p className="text-sm text-stone-500 mt-0.5">
+            Enable AI-powered SMS messaging for your business via Twilio
+          </p>
+        </div>
+
+        {smsStatus && (
+          <div
+            className={`px-4 py-3 rounded-xl text-sm ${
+              smsStatus.type === 'success'
+                ? 'bg-emerald-50 text-emerald-800 border border-emerald-200'
+                : 'bg-red-50 text-red-800 border border-red-200'
+            }`}
+          >
+            {smsStatus.message}
+          </div>
+        )}
+
+        {/* Status indicator */}
+        <div className="flex items-center gap-3">
+          {smsPhoneNumber && smsEnabled ? (
+            <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium bg-emerald-100 text-emerald-800">
+              <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
+              Active
+            </span>
+          ) : smsPhoneNumber ? (
+            <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium bg-amber-100 text-amber-800">
+              <span className="w-2 h-2 rounded-full bg-amber-500"></span>
+              Phone Configured (SMS disabled)
+            </span>
+          ) : (
+            <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium bg-stone-100 text-stone-600">
+              <span className="w-2 h-2 rounded-full bg-stone-400"></span>
+              Not Configured
+            </span>
+          )}
+          {smsPhoneNumber && (
+            <span className="text-sm text-stone-500 font-mono">{smsPhoneNumber}</span>
+          )}
+        </div>
+
+        {/* SMS enabled toggle */}
+        <div className="flex items-center gap-3">
+          <label className="relative inline-flex items-center cursor-pointer">
+            <input
+              type="checkbox"
+              checked={smsEnabled}
+              onChange={(e) => setSmsEnabled(e.target.checked)}
+              className="sr-only peer"
+            />
+            <div className="w-11 h-6 bg-stone-200 peer-focus:ring-2 peer-focus:ring-violet-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-stone-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-violet-600"></div>
+          </label>
+          <span className="text-sm text-stone-700 font-medium">Enable SMS messaging</span>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+          <div>
+            <label className={labelClass}>Twilio Phone Number</label>
+            <input
+              value={smsPhoneNumber}
+              onChange={(e) => setSmsPhoneNumber(e.target.value)}
+              placeholder="+1234567890"
+              className={`${inputClass} font-mono`}
+            />
+            <p className="mt-1.5 text-xs text-stone-400">Your Twilio phone number (E.164 format)</p>
+          </div>
+          <div>
+            <label className={labelClass}>Owner Notification Phone</label>
+            <input
+              value={smsOwnerPhone}
+              onChange={(e) => setSmsOwnerPhone(e.target.value)}
+              placeholder="+1234567890"
+              className={`${inputClass} font-mono`}
+            />
+            <p className="mt-1.5 text-xs text-stone-400">Receives approval requests and alerts via SMS</p>
+          </div>
+        </div>
+
+        <button
+          onClick={handleSaveSms}
+          disabled={smsSaving}
+          className="bg-violet-600 hover:bg-violet-700 text-white rounded-xl py-2.5 px-5 text-sm font-medium disabled:opacity-50 transition-colors"
+        >
+          {smsSaving ? 'Saving...' : 'Save SMS Settings'}
+        </button>
+      </div>
+
       {/* Chat Widget Info */}
-      <div className="bg-white rounded-xl border border-gray-200 p-6 space-y-2">
-        <h2 className="text-lg font-semibold text-gray-900">Chat Widget</h2>
-        <p className="text-sm text-gray-600">
-          Share this link with your customers to chat with your AI assistant:
-        </p>
+      <div className="bg-white rounded-2xl border border-stone-200 shadow-sm p-6 space-y-3">
+        <div>
+          <h2 className="text-lg font-semibold text-stone-900">Chat Widget</h2>
+          <p className="text-sm text-stone-500 mt-0.5">
+            Share this link with your customers to chat with your AI assistant
+          </p>
+        </div>
         <div className="flex items-center gap-2">
-          <code className="flex-1 px-3 py-2 bg-gray-100 rounded-lg text-sm text-blue-600 font-mono">
+          <code className="flex-1 px-4 py-2.5 bg-stone-50 rounded-xl text-sm text-violet-600 font-mono border border-stone-200">
             {typeof window !== 'undefined' ? window.location.origin : ''}/chat/{tenantSlug}
           </code>
         </div>
       </div>
 
       {/* Save button */}
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-3 pt-2">
         <button
           onClick={handleSave}
           disabled={saving}
-          className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 transition-colors"
+          className="bg-violet-600 hover:bg-violet-700 text-white rounded-xl py-2.5 px-6 font-medium disabled:opacity-50 transition-colors"
         >
           {saving ? 'Saving...' : 'Save Changes'}
         </button>
-        {saved && <span className="text-sm text-green-600">Saved successfully!</span>}
+        {saved && <span className="text-sm text-emerald-600 font-medium">Saved successfully!</span>}
       </div>
     </div>
   )

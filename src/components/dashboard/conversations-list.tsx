@@ -28,6 +28,13 @@ const channelIcons: Record<string, React.ElementType> = {
   sms: Smartphone,
 }
 
+const channelColors: Record<string, string> = {
+  web_chat: 'bg-violet-50 text-violet-600',
+  voice: 'bg-emerald-50 text-emerald-600',
+  email: 'bg-violet-50 text-violet-600',
+  sms: 'bg-amber-50 text-amber-600',
+}
+
 export function ConversationsList({
   conversations: initialConversations,
   tenantId,
@@ -66,48 +73,53 @@ export function ConversationsList({
 
   if (conversations.length === 0) {
     return (
-      <div className="bg-white rounded-xl border border-gray-200 p-8 text-center">
-        <MessageSquare className="w-10 h-10 mx-auto mb-3 text-gray-300" />
-        <p className="text-gray-500">No conversations yet</p>
-        <p className="text-sm text-gray-400 mt-1">
-          They'll appear here once customers start chatting
+      <div className="bg-white rounded-2xl border border-stone-200 shadow-sm p-12 text-center">
+        <div className="w-14 h-14 bg-stone-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
+          <MessageSquare className="w-7 h-7 text-stone-400" />
+        </div>
+        <p className="text-stone-700 font-medium text-base">No conversations yet</p>
+        <p className="text-sm text-stone-500 mt-1">
+          They&apos;ll appear here once customers start chatting
         </p>
       </div>
     )
   }
 
   return (
-    <div className="bg-white rounded-xl border border-gray-200 divide-y divide-gray-100">
+    <div className="bg-white rounded-2xl border border-stone-200 shadow-sm divide-y divide-stone-100">
       {conversations.map((conv) => {
         const ChannelIcon = channelIcons[conv.channel] || MessageSquare
+        const iconColor = channelColors[conv.channel] || 'bg-stone-100 text-stone-600'
         return (
           <Link
             key={conv.id}
             href={`/conversations/${conv.id}`}
-            className="flex items-center gap-4 px-5 py-4 hover:bg-gray-50 transition-colors"
+            className="flex items-center gap-4 px-6 py-4 hover:bg-stone-50 transition-colors"
           >
-            <div className="p-2 rounded-lg bg-gray-100">
-              <ChannelIcon className="w-4 h-4 text-gray-600" />
+            <div className={`p-2.5 rounded-xl ${iconColor}`}>
+              <ChannelIcon className="w-4 h-4" />
             </div>
             <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-2">
-                <p className="text-sm font-medium text-gray-900">
+              <div className="flex items-center gap-2.5">
+                <p className="text-sm font-semibold text-stone-900">
                   {conv.clients?.name || 'Anonymous'}
                 </p>
                 <span
-                  className={`px-2 py-0.5 text-xs rounded-full ${
+                  className={`rounded-full px-3 py-1 text-xs font-medium ${
                     conv.status === 'active'
-                      ? 'bg-green-100 text-green-700'
+                      ? 'bg-emerald-50 text-emerald-700'
                       : conv.status === 'escalated'
-                      ? 'bg-red-100 text-red-700'
-                      : 'bg-gray-100 text-gray-600'
+                      ? 'bg-red-50 text-red-700'
+                      : 'bg-stone-100 text-stone-600'
                   }`}
                 >
                   {conv.status}
                 </span>
               </div>
-              <p className="text-xs text-gray-500 mt-0.5">
-                {conv.channel.replace('_', ' ')} • {formatRelativeTime(conv.updated_at)}
+              <p className="text-sm text-stone-500 mt-0.5">
+                <span className="capitalize">{conv.channel.replace('_', ' ')}</span>
+                {' \u00b7 '}
+                {formatRelativeTime(conv.updated_at)}
               </p>
             </div>
           </Link>

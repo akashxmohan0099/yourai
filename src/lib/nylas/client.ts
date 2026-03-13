@@ -132,3 +132,44 @@ export async function listCalendarEvents(
 export async function listCalendars(grantId: string) {
   return nylasRequest('/calendars', grantId)
 }
+
+// Email functions
+
+export async function sendEmail(
+  grantId: string,
+  email: {
+    to: Array<{ email: string; name?: string }>
+    subject: string
+    body: string
+    replyToMessageId?: string
+  }
+) {
+  const payload: any = {
+    to: email.to,
+    subject: email.subject,
+    body: email.body,
+  }
+  if (email.replyToMessageId) {
+    payload.reply_to_message_id = email.replyToMessageId
+  }
+  return nylasRequest('/messages/send', grantId, {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  })
+}
+
+export async function getEmailMessage(grantId: string, messageId: string) {
+  return nylasRequest(`/messages/${messageId}`, grantId)
+}
+
+export async function listEmailMessages(
+  grantId: string,
+  options?: { limit?: number; unread?: boolean; in?: string }
+) {
+  const params = new URLSearchParams()
+  if (options?.limit) params.set('limit', String(options.limit))
+  if (options?.unread !== undefined) params.set('unread', String(options.unread))
+  if (options?.in) params.set('in', options.in)
+  const query = params.toString() ? `?${params.toString()}` : ''
+  return nylasRequest(`/messages${query}`, grantId)
+}

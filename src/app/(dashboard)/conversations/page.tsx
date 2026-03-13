@@ -14,9 +14,14 @@ export default async function ConversationsPage() {
     .limit(50)
 
   return (
-    <div className="space-y-6">
-      <h1 className="text-2xl font-bold text-gray-900">Conversations</h1>
-      <ConversationsList conversations={conversations || []} tenantId={tenantId} />
+    <div className="min-h-screen bg-stone-50">
+      <div className="space-y-6 max-w-7xl mx-auto px-4 py-6">
+        <div>
+          <h1 className="text-2xl font-semibold text-stone-900 mb-1">Conversations</h1>
+          <p className="text-stone-500 text-base">All your customer interactions in one place</p>
+        </div>
+        <ConversationsList conversations={conversations || []} tenantId={tenantId} />
+      </div>
     </div>
   )
 }

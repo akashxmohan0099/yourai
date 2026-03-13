@@ -68,13 +68,13 @@ export function FaqsStep({ tenantId, onNext, onBack }: FaqsStepProps) {
     <form onSubmit={handleSubmit} className="space-y-4">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-lg font-semibold text-gray-900">Frequently asked questions</h2>
-          <p className="text-sm text-gray-500">Add questions your customers commonly ask</p>
+          <h2 className="text-lg font-semibold text-stone-900">Frequently asked questions</h2>
+          <p className="text-sm text-stone-500">Add questions your customers commonly ask</p>
         </div>
         <button
           type="button"
           onClick={addFaq}
-          className="flex items-center gap-1 text-sm text-blue-600 hover:text-blue-700"
+          className="flex items-center gap-1 text-sm text-violet-600 hover:text-violet-700"
         >
           <Plus className="w-4 h-4" /> Add FAQ
         </button>
@@ -82,9 +82,9 @@ export function FaqsStep({ tenantId, onNext, onBack }: FaqsStepProps) {
 
       <div className="space-y-4">
         {faqs.map((faq, index) => (
-          <div key={index} className="border border-gray-200 rounded-lg p-4 space-y-3">
+          <div key={index} className="border border-stone-200 rounded-lg p-4 space-y-3">
             <div className="flex items-center justify-between">
-              <span className="text-sm font-medium text-gray-500">FAQ {index + 1}</span>
+              <span className="text-sm font-medium text-stone-500">FAQ {index + 1}</span>
               {faqs.length > 1 && (
                 <button
                   type="button"
@@ -97,43 +97,43 @@ export function FaqsStep({ tenantId, onNext, onBack }: FaqsStepProps) {
             </div>
 
             <div>
-              <label className="block text-sm text-gray-600 mb-1">Question</label>
+              <label className="block text-sm text-stone-600 mb-1">Question</label>
               <input
                 value={faq.question}
                 onChange={(e) => updateFaq(index, 'question', e.target.value)}
                 placeholder="e.g., Do you accept walk-ins?"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full px-3 py-2 border border-stone-300 rounded-lg text-sm focus:ring-2 focus:ring-violet-500 focus:border-transparent"
               />
             </div>
 
             <div>
-              <label className="block text-sm text-gray-600 mb-1">Answer</label>
+              <label className="block text-sm text-stone-600 mb-1">Answer</label>
               <textarea
                 value={faq.answer}
                 onChange={(e) => updateFaq(index, 'answer', e.target.value)}
                 rows={2}
                 placeholder="Your answer..."
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full px-3 py-2 border border-stone-300 rounded-lg text-sm focus:ring-2 focus:ring-violet-500 focus:border-transparent"
               />
             </div>
           </div>
         ))}
       </div>
 
-      <p className="text-xs text-gray-400">You can skip this step and add FAQs later from settings.</p>
+      <p className="text-xs text-stone-400">You can skip this step and add FAQs later from settings.</p>
 
       <div className="flex justify-between pt-4">
         <button
           type="button"
           onClick={onBack}
-          className="px-6 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+          className="px-6 py-2 border border-stone-300 text-stone-700 rounded-lg hover:bg-stone-50 transition-colors"
         >
           Back
         </button>
         <button
           type="submit"
           disabled={saving}
-          className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 transition-colors"
+          className="px-6 py-2 bg-violet-600 text-white rounded-lg hover:bg-violet-700 disabled:opacity-50 transition-colors"
         >
           {saving ? 'Saving...' : 'Next'}
         </button>

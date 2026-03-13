@@ -37,60 +37,69 @@ export function ChannelConfig({ tenantId, config }: ChannelConfigProps) {
     setTimeout(() => setSaved(false), 3000)
   }
 
+  const inputClass = 'w-full px-4 py-2.5 border border-stone-300 rounded-xl text-sm text-stone-900 focus:ring-2 focus:ring-violet-500 focus:border-transparent transition-shadow'
+  const labelClass = 'block text-sm font-medium text-stone-700 mb-1.5'
+
   return (
     <div className="space-y-6">
       {/* Web Chat - always enabled */}
-      <div className="bg-white rounded-xl border border-gray-200 p-6">
-        <div className="flex items-center gap-3 mb-4">
-          <div className="p-2 bg-blue-100 rounded-lg">
-            <Globe className="w-5 h-5 text-blue-600" />
+      <div className="bg-white rounded-2xl border border-stone-200 shadow-sm p-6">
+        <div className="flex items-center gap-3">
+          <div className="p-2.5 bg-violet-50 rounded-xl">
+            <Globe className="w-5 h-5 text-violet-600" />
           </div>
-          <div>
-            <h2 className="font-semibold text-gray-900">Web Chat</h2>
-            <p className="text-sm text-gray-500">Always enabled</p>
+          <div className="flex-1">
+            <h2 className="font-semibold text-stone-900">Web Chat</h2>
+            <p className="text-sm text-stone-500">Always enabled for your customers</p>
           </div>
-          <CheckCircle className="w-5 h-5 text-green-500 ml-auto" />
+          <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium bg-emerald-100 text-emerald-700">
+            <CheckCircle className="w-4 h-4" />
+            Active
+          </span>
         </div>
       </div>
 
       {/* Voice */}
-      <div className="bg-white rounded-xl border border-gray-200 p-6">
+      <div className="bg-white rounded-2xl border border-stone-200 shadow-sm p-6">
         <div className="flex items-center gap-3 mb-4">
-          <div className="p-2 bg-purple-100 rounded-lg">
-            <Phone className="w-5 h-5 text-purple-600" />
+          <div className="p-2.5 bg-violet-50 rounded-xl">
+            <Phone className="w-5 h-5 text-violet-600" />
           </div>
-          <div>
-            <h2 className="font-semibold text-gray-900">Voice (Vapi)</h2>
-            <p className="text-sm text-gray-500">AI answers phone calls</p>
+          <div className="flex-1">
+            <h2 className="font-semibold text-stone-900">Voice (Vapi)</h2>
+            <p className="text-sm text-stone-500">AI answers phone calls for your business</p>
           </div>
-          <label className="ml-auto flex items-center gap-2">
-            <input
-              type="checkbox"
-              checked={form.voice_enabled}
-              onChange={(e) => setForm({ ...form, voice_enabled: e.target.checked })}
-              className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-            />
-            <span className="text-sm text-gray-600">Enabled</span>
+          <label className="flex items-center gap-2.5 cursor-pointer">
+            <div className="relative inline-flex items-center">
+              <input
+                type="checkbox"
+                checked={form.voice_enabled}
+                onChange={(e) => setForm({ ...form, voice_enabled: e.target.checked })}
+                className="sr-only peer"
+              />
+              <div className="w-11 h-6 bg-stone-200 peer-focus:ring-2 peer-focus:ring-violet-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-stone-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-violet-600"></div>
+            </div>
+            <span className="text-sm text-stone-600 font-medium">Enabled</span>
           </label>
         </div>
         {form.voice_enabled && (
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4 pt-4 border-t border-gray-100">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 mt-4 pt-4 border-t border-stone-100">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Vapi Assistant ID</label>
+              <label className={labelClass}>Vapi Assistant ID</label>
               <input
                 value={form.vapi_assistant_id}
                 onChange={(e) => setForm({ ...form, vapi_assistant_id: e.target.value })}
                 placeholder="asst_..."
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className={`${inputClass} font-mono`}
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Vapi Phone Number ID</label>
+              <label className={labelClass}>Vapi Phone Number ID</label>
               <input
                 value={form.vapi_phone_number_id}
                 onChange={(e) => setForm({ ...form, vapi_phone_number_id: e.target.value })}
                 placeholder="phn_..."
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className={`${inputClass} font-mono`}
               />
             </div>
           </div>
@@ -98,77 +107,86 @@ export function ChannelConfig({ tenantId, config }: ChannelConfigProps) {
       </div>
 
       {/* SMS */}
-      <div className="bg-white rounded-xl border border-gray-200 p-6">
+      <div className="bg-white rounded-2xl border border-stone-200 shadow-sm p-6">
         <div className="flex items-center gap-3 mb-4">
-          <div className="p-2 bg-green-100 rounded-lg">
-            <MessageSquare className="w-5 h-5 text-green-600" />
+          <div className="p-2.5 bg-emerald-50 rounded-xl">
+            <MessageSquare className="w-5 h-5 text-emerald-600" />
           </div>
-          <div>
-            <h2 className="font-semibold text-gray-900">SMS (Twilio)</h2>
-            <p className="text-sm text-gray-500">AI responds to text messages</p>
+          <div className="flex-1">
+            <h2 className="font-semibold text-stone-900">SMS (Twilio)</h2>
+            <p className="text-sm text-stone-500">AI responds to text messages</p>
           </div>
-          <label className="ml-auto flex items-center gap-2">
-            <input
-              type="checkbox"
-              checked={form.sms_enabled}
-              onChange={(e) => setForm({ ...form, sms_enabled: e.target.checked })}
-              className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-            />
-            <span className="text-sm text-gray-600">Enabled</span>
+          <label className="flex items-center gap-2.5 cursor-pointer">
+            <div className="relative inline-flex items-center">
+              <input
+                type="checkbox"
+                checked={form.sms_enabled}
+                onChange={(e) => setForm({ ...form, sms_enabled: e.target.checked })}
+                className="sr-only peer"
+              />
+              <div className="w-11 h-6 bg-stone-200 peer-focus:ring-2 peer-focus:ring-violet-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-stone-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-violet-600"></div>
+            </div>
+            <span className="text-sm text-stone-600 font-medium">Enabled</span>
           </label>
         </div>
         {form.sms_enabled && (
-          <div className="mt-4 pt-4 border-t border-gray-100">
+          <div className="mt-4 pt-4 border-t border-stone-100">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Twilio Phone Number</label>
+              <label className={labelClass}>Twilio Phone Number</label>
               <input
                 value={form.twilio_phone_number}
                 onChange={(e) => setForm({ ...form, twilio_phone_number: e.target.value })}
                 placeholder="+1..."
-                className="w-full sm:w-64 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className={`${inputClass} sm:w-72 font-mono`}
               />
+              <p className="mt-1.5 text-xs text-stone-400">Your Twilio phone number in E.164 format</p>
             </div>
           </div>
         )}
       </div>
 
       {/* Notifications */}
-      <div className="bg-white rounded-xl border border-gray-200 p-6 space-y-4">
-        <h2 className="font-semibold text-gray-900">Owner Notifications</h2>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      <div className="bg-white rounded-2xl border border-stone-200 shadow-sm p-6 space-y-5">
+        <div>
+          <h2 className="font-semibold text-stone-900">Owner Notifications</h2>
+          <p className="text-sm text-stone-500 mt-0.5">How you receive approval requests and alerts</p>
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Your Phone (for approval SMS)</label>
+            <label className={labelClass}>Your Phone (for approval SMS)</label>
             <input
               value={form.owner_notification_phone}
               onChange={(e) => setForm({ ...form, owner_notification_phone: e.target.value })}
               placeholder="+1..."
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className={`${inputClass} font-mono`}
             />
+            <p className="mt-1.5 text-xs text-stone-400">We will text you when approvals are needed</p>
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Approval Timeout (minutes)</label>
+            <label className={labelClass}>Approval Timeout (minutes)</label>
             <input
               type="number"
               min="5"
               max="1440"
               value={form.approval_timeout_minutes}
               onChange={(e) => setForm({ ...form, approval_timeout_minutes: parseInt(e.target.value) || 30 })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className={inputClass}
             />
+            <p className="mt-1.5 text-xs text-stone-400">How long before pending approvals expire</p>
           </div>
         </div>
       </div>
 
       {/* Save */}
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-3 pt-2">
         <button
           onClick={handleSave}
           disabled={saving}
-          className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 transition-colors"
+          className="bg-violet-600 hover:bg-violet-700 text-white rounded-xl py-2.5 px-6 font-medium disabled:opacity-50 transition-colors"
         >
           {saving ? 'Saving...' : 'Save Changes'}
         </button>
-        {saved && <span className="text-sm text-green-600">Saved!</span>}
+        {saved && <span className="text-sm text-emerald-600 font-medium">Saved!</span>}
       </div>
     </div>
   )

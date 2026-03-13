@@ -1,6 +1,15 @@
 import { createAdminClient } from '@/lib/supabase/admin'
 import { inngest } from '@/lib/inngest/client'
 
+export async function GET(request: Request) {
+  const url = new URL(request.url)
+  const challenge = url.searchParams.get('challenge')
+  if (challenge) {
+    return new Response(challenge, { status: 200 })
+  }
+  return new Response('OK', { status: 200 })
+}
+
 export async function POST(request: Request) {
   try {
     const payload = await request.json()

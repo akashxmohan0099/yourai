@@ -20,7 +20,7 @@ export default async function SettingsPage() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-bold text-gray-900">Settings</h1>
+      <h1 className="text-2xl font-semibold text-stone-900">Settings</h1>
       <SettingsForm
         tenantId={tenantId}
         tenantSlug={tenant.slug}

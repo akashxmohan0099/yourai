@@ -15,11 +15,11 @@ export default async function DashboardLayout({
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-stone-50">
       <DashboardSidebar tenantName={tenant.name} tenantSlug={tenant.slug} />
       <div className="lg:pl-64">
         <DashboardHeader displayName={profile.display_name || 'User'} role={profile.role} />
-        <main className="p-6">{children}</main>
+        <main className="p-8">{children}</main>
       </div>
     </div>
   )

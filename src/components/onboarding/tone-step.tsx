@@ -74,8 +74,8 @@ export function ToneStep({ tenantId, onComplete, onBack }: ToneStepProps) {
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
       <div>
-        <h2 className="text-lg font-semibold text-gray-900">Choose your AI's personality</h2>
-        <p className="text-sm text-gray-500">This sets the tone for how your AI talks to customers</p>
+        <h2 className="text-lg font-semibold text-stone-900">Choose your AI's personality</h2>
+        <p className="text-sm text-stone-500">This sets the tone for how your AI talks to customers</p>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -86,19 +86,19 @@ export function ToneStep({ tenantId, onComplete, onBack }: ToneStepProps) {
             onClick={() => setTone(t.value)}
             className={`text-left p-4 rounded-lg border-2 transition-colors ${
               tone === t.value
-                ? 'border-blue-600 bg-blue-50'
-                : 'border-gray-200 hover:border-gray-300'
+                ? 'border-violet-600 bg-violet-50'
+                : 'border-stone-200 hover:border-stone-300'
             }`}
           >
-            <div className="font-medium text-gray-900">{t.label}</div>
-            <div className="text-xs text-gray-500 mt-1">{t.description}</div>
-            <div className="text-xs text-gray-400 mt-2 italic">{t.example}</div>
+            <div className="font-medium text-stone-900">{t.label}</div>
+            <div className="text-xs text-stone-500 mt-1">{t.description}</div>
+            <div className="text-xs text-stone-400 mt-2 italic">{t.example}</div>
           </button>
         ))}
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">
+        <label className="block text-sm font-medium text-stone-700 mb-1">
           Custom instructions (optional)
         </label>
         <textarea
@@ -106,7 +106,7 @@ export function ToneStep({ tenantId, onComplete, onBack }: ToneStepProps) {
           onChange={(e) => setCustomInstructions(e.target.value)}
           rows={3}
           placeholder="Any special instructions for your AI? e.g., 'Always mention our loyalty program' or 'Never discuss competitor pricing'"
-          className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          className="w-full px-3 py-2 border border-stone-300 rounded-lg text-sm focus:ring-2 focus:ring-violet-500 focus:border-transparent"
         />
       </div>
 
@@ -114,14 +114,14 @@ export function ToneStep({ tenantId, onComplete, onBack }: ToneStepProps) {
         <button
           type="button"
           onClick={onBack}
-          className="px-6 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+          className="px-6 py-2 border border-stone-300 text-stone-700 rounded-lg hover:bg-stone-50 transition-colors"
         >
           Back
         </button>
         <button
           type="submit"
           disabled={saving}
-          className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 transition-colors"
+          className="px-6 py-2 bg-violet-600 text-white rounded-lg hover:bg-violet-700 disabled:opacity-50 transition-colors"
         >
           {saving ? 'Finishing setup...' : 'Complete Setup'}
         </button>

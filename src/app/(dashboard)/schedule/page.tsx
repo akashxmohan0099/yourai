@@ -1,6 +1,6 @@
 import { requireTenant } from '@/lib/auth/guards'
 import { createClient } from '@/lib/supabase/server'
-import { Calendar, Plus, Clock } from 'lucide-react'
+import { Calendar, Clock } from 'lucide-react'
 import { ScheduleView } from '@/components/dashboard/schedule-view'
 
 export default async function SchedulePage() {
@@ -27,73 +27,82 @@ export default async function SchedulePage() {
   )
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
+    <div className="min-h-screen bg-stone-50">
+      <div className="space-y-8 max-w-7xl mx-auto px-4 py-6">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Schedule</h1>
-          <p className="text-gray-500">
+          <h1 className="text-2xl font-semibold text-stone-900 mb-1">Schedule</h1>
+          <p className="text-stone-500 text-base">
             {todayAppointments.length} appointment{todayAppointments.length !== 1 ? 's' : ''} today
           </p>
         </div>
-      </div>
 
-      {/* Today's appointments */}
-      <div className="bg-white rounded-xl border border-gray-200">
-        <div className="px-5 py-4 border-b border-gray-200 flex items-center gap-2">
-          <Clock className="w-5 h-5 text-blue-600" />
-          <h2 className="text-lg font-semibold text-gray-900">Today</h2>
-        </div>
-        <div className="divide-y divide-gray-100">
-          {todayAppointments.length === 0 ? (
-            <div className="px-5 py-8 text-center text-gray-500">
-              <Calendar className="w-8 h-8 mx-auto mb-2 text-gray-300" />
-              <p>No appointments today</p>
+        {/* Today's appointments */}
+        <div className="bg-white rounded-2xl border border-stone-200 shadow-sm">
+          <div className="px-6 py-5 border-b border-stone-200 flex items-center gap-3">
+            <div className="p-2 bg-violet-50 rounded-xl">
+              <Clock className="w-5 h-5 text-violet-600" />
             </div>
-          ) : (
-            todayAppointments.map((apt: any) => (
-              <div key={apt.id} className="px-5 py-3 flex items-center gap-4">
-                <div className="text-center min-w-[60px]">
-                  <p className="text-sm font-semibold text-blue-600">
-                    {new Date(apt.starts_at).toLocaleTimeString([], {
-                      hour: '2-digit',
-                      minute: '2-digit',
-                    })}
-                  </p>
-                  <p className="text-xs text-gray-400">
-                    {new Date(apt.ends_at).toLocaleTimeString([], {
-                      hour: '2-digit',
-                      minute: '2-digit',
-                    })}
-                  </p>
+            <div>
+              <h2 className="text-lg font-semibold text-stone-900">Today</h2>
+              <p className="text-sm text-stone-500">Your appointments for today</p>
+            </div>
+          </div>
+          <div className="divide-y divide-stone-100">
+            {todayAppointments.length === 0 ? (
+              <div className="px-6 py-12 text-center">
+                <div className="w-14 h-14 bg-stone-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                  <Calendar className="w-7 h-7 text-stone-400" />
                 </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-gray-900 truncate">
-                    {apt.title}
-                  </p>
-                  <p className="text-xs text-gray-500">
-                    {apt.clients?.name || 'No client'}
-                    {apt.services?.name ? ` · ${apt.services.name}` : ''}
-                  </p>
-                </div>
-                <span
-                  className={`px-2 py-0.5 text-xs rounded-full ${
-                    apt.status === 'confirmed'
-                      ? 'bg-green-100 text-green-700'
-                      : apt.status === 'pending'
-                      ? 'bg-yellow-100 text-yellow-700'
-                      : 'bg-gray-100 text-gray-600'
-                  }`}
-                >
-                  {apt.status}
-                </span>
+                <p className="text-stone-700 font-medium text-base">No appointments today</p>
+                <p className="text-stone-500 text-sm mt-1">Enjoy your free time!</p>
               </div>
-            ))
-          )}
+            ) : (
+              todayAppointments.map((apt: any) => (
+                <div key={apt.id} className="px-6 py-4 flex items-center gap-5">
+                  <div className="text-center min-w-[70px]">
+                    <p className="text-sm font-semibold text-violet-600">
+                      {new Date(apt.starts_at).toLocaleTimeString([], {
+                        hour: '2-digit',
+                        minute: '2-digit',
+                      })}
+                    </p>
+                    <p className="text-xs text-stone-400 mt-0.5">
+                      {new Date(apt.ends_at).toLocaleTimeString([], {
+                        hour: '2-digit',
+                        minute: '2-digit',
+                      })}
+                    </p>
+                  </div>
+                  <div className="w-px h-10 bg-stone-200" />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-semibold text-stone-900 truncate">
+                      {apt.title}
+                    </p>
+                    <p className="text-sm text-stone-500 mt-0.5">
+                      {apt.clients?.name || 'No client'}
+                      {apt.services?.name ? ` \u00b7 ${apt.services.name}` : ''}
+                    </p>
+                  </div>
+                  <span
+                    className={`rounded-full px-3 py-1 text-xs font-medium ${
+                      apt.status === 'confirmed'
+                        ? 'bg-emerald-50 text-emerald-700'
+                        : apt.status === 'pending'
+                        ? 'bg-amber-50 text-amber-700'
+                        : 'bg-stone-100 text-stone-600'
+                    }`}
+                  >
+                    {apt.status}
+                  </span>
+                </div>
+              ))
+            )}
+          </div>
         </div>
-      </div>
 
-      {/* Week view */}
-      <ScheduleView initialAppointments={appointments || []} />
+        {/* Week view */}
+        <ScheduleView initialAppointments={appointments || []} />
+      </div>
     </div>
   )
 }

@@ -47,9 +47,17 @@ export async function POST(request: Request) {
     // Save user message
     const lastMessage = messages[messages.length - 1]
     if (lastMessage?.role === 'user') {
-      const content = typeof lastMessage.content === 'string'
-        ? lastMessage.content
-        : lastMessage.content?.[0]?.text || ''
+      let content = ''
+      if (typeof lastMessage.content === 'string') {
+        content = lastMessage.content
+      } else if (lastMessage.parts) {
+        content = lastMessage.parts
+          .filter((p: any) => p.type === 'text')
+          .map((p: any) => p.text)
+          .join('')
+      } else if (Array.isArray(lastMessage.content)) {
+        content = lastMessage.content?.[0]?.text || ''
+      }
       await supabase.from('messages').insert({
         conversation_id: convId,
         tenant_id: tenantId,

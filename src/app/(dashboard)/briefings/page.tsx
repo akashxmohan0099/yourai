@@ -1,6 +1,6 @@
 import { requireTenant } from '@/lib/auth/guards'
 import { createClient } from '@/lib/supabase/server'
-import { Newspaper, Calendar } from 'lucide-react'
+import { Newspaper, Calendar, CalendarDays, MessageCircle, Bell, UserPlus } from 'lucide-react'
 
 export default async function BriefingsPage() {
   const { tenantId } = await requireTenant()
@@ -16,16 +16,18 @@ export default async function BriefingsPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-gray-900">Daily Briefings</h1>
-        <p className="text-gray-500">Your AI-generated morning updates</p>
+        <h1 className="text-2xl font-semibold text-stone-900 mb-1">Daily Briefings</h1>
+        <p className="text-stone-500">Your AI-generated morning updates</p>
       </div>
 
       {!briefings || briefings.length === 0 ? (
-        <div className="bg-white rounded-xl border border-gray-200 px-5 py-12 text-center">
-          <Newspaper className="w-10 h-10 mx-auto mb-3 text-gray-300" />
-          <p className="text-gray-500 mb-2">No briefings yet</p>
-          <p className="text-sm text-gray-400">
-            Enable daily briefings in Settings to get AI-generated morning updates.
+        <div className="bg-white rounded-2xl border border-stone-200 shadow-sm px-6 py-16 text-center">
+          <div className="w-12 h-12 rounded-2xl bg-violet-50 flex items-center justify-center mx-auto mb-4">
+            <Newspaper className="w-6 h-6 text-violet-400" />
+          </div>
+          <p className="text-stone-700 font-medium mb-1">No briefings yet</p>
+          <p className="text-sm text-stone-500">
+            Enable daily briefings in Settings to get AI-generated morning updates
           </p>
         </div>
       ) : (
@@ -33,11 +35,13 @@ export default async function BriefingsPage() {
           {briefings.map((briefing: any) => (
             <div
               key={briefing.id}
-              className="bg-white rounded-xl border border-gray-200 overflow-hidden"
+              className="bg-white rounded-2xl border border-stone-200 shadow-sm overflow-hidden"
             >
-              <div className="px-5 py-3 border-b border-gray-100 flex items-center gap-2 bg-gray-50">
-                <Calendar className="w-4 h-4 text-gray-500" />
-                <span className="text-sm font-medium text-gray-700">
+              <div className="px-6 py-4 border-b border-stone-100 flex items-center gap-3 bg-stone-50 rounded-t-2xl">
+                <div className="p-2 rounded-xl bg-violet-50">
+                  <Calendar className="w-4 h-4 text-violet-600" />
+                </div>
+                <span className="text-sm font-semibold text-stone-900">
                   {new Date(briefing.briefing_date).toLocaleDateString(undefined, {
                     weekday: 'long',
                     year: 'numeric',
@@ -46,40 +50,52 @@ export default async function BriefingsPage() {
                   })}
                 </span>
                 {briefing.delivered_via?.length > 0 && (
-                  <span className="ml-auto text-xs text-gray-400">
+                  <span className="ml-auto px-3 py-1 text-xs font-medium rounded-full bg-stone-100 text-stone-500">
                     via {briefing.delivered_via.join(', ')}
                   </span>
                 )}
               </div>
-              <div className="px-5 py-4">
-                <p className="text-sm text-gray-700 whitespace-pre-wrap">
+              <div className="px-6 py-5">
+                <p className="text-sm text-stone-700 whitespace-pre-wrap leading-relaxed">
                   {briefing.content?.text || JSON.stringify(briefing.content)}
                 </p>
                 {briefing.content?.data && (
-                  <div className="mt-3 grid grid-cols-2 sm:grid-cols-4 gap-3">
-                    <div className="bg-blue-50 rounded-lg px-3 py-2 text-center">
-                      <p className="text-lg font-semibold text-blue-700">
+                  <div className="mt-4 grid grid-cols-2 sm:grid-cols-4 gap-3">
+                    <div className="bg-violet-50 rounded-xl px-4 py-3 text-center">
+                      <div className="flex justify-center mb-1">
+                        <CalendarDays className="w-4 h-4 text-violet-500" />
+                      </div>
+                      <p className="text-lg font-semibold text-violet-700">
                         {briefing.content.data.appointments?.length || 0}
                       </p>
-                      <p className="text-xs text-blue-500">Appointments</p>
+                      <p className="text-xs text-violet-500">Appointments</p>
                     </div>
-                    <div className="bg-green-50 rounded-lg px-3 py-2 text-center">
-                      <p className="text-lg font-semibold text-green-700">
+                    <div className="bg-emerald-50 rounded-xl px-4 py-3 text-center">
+                      <div className="flex justify-center mb-1">
+                        <MessageCircle className="w-4 h-4 text-emerald-500" />
+                      </div>
+                      <p className="text-lg font-semibold text-emerald-700">
                         {briefing.content.data.overnightConversations?.length || 0}
                       </p>
-                      <p className="text-xs text-green-500">Conversations</p>
+                      <p className="text-xs text-emerald-500">Conversations</p>
                     </div>
-                    <div className="bg-orange-50 rounded-lg px-3 py-2 text-center">
-                      <p className="text-lg font-semibold text-orange-700">
+                    <div className="bg-amber-50 rounded-xl px-4 py-3 text-center">
+                      <div className="flex justify-center mb-1">
+                        <Bell className="w-4 h-4 text-amber-500" />
+                      </div>
+                      <p className="text-lg font-semibold text-amber-700">
                         {briefing.content.data.pendingApprovals?.length || 0}
                       </p>
-                      <p className="text-xs text-orange-500">Approvals</p>
+                      <p className="text-xs text-amber-500">Approvals</p>
                     </div>
-                    <div className="bg-purple-50 rounded-lg px-3 py-2 text-center">
-                      <p className="text-lg font-semibold text-purple-700">
+                    <div className="bg-violet-50 rounded-xl px-4 py-3 text-center">
+                      <div className="flex justify-center mb-1">
+                        <UserPlus className="w-4 h-4 text-violet-500" />
+                      </div>
+                      <p className="text-lg font-semibold text-violet-700">
                         {briefing.content.data.newClients?.length || 0}
                       </p>
-                      <p className="text-xs text-purple-500">New Leads</p>
+                      <p className="text-xs text-violet-500">New Leads</p>
                     </div>
                   </div>
                 )}

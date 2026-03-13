@@ -104,11 +104,11 @@ export function ServicesStep({ tenantId, onNext, onBack }: ServicesStepProps) {
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div className="flex items-center justify-between">
-        <h2 className="text-lg font-semibold text-gray-900">Your services</h2>
+        <h2 className="text-lg font-semibold text-stone-900">Your services</h2>
         <button
           type="button"
           onClick={addService}
-          className="flex items-center gap-1 text-sm text-blue-600 hover:text-blue-700"
+          className="flex items-center gap-1 text-sm text-violet-600 hover:text-violet-700"
         >
           <Plus className="w-4 h-4" /> Add service
         </button>
@@ -116,9 +116,9 @@ export function ServicesStep({ tenantId, onNext, onBack }: ServicesStepProps) {
 
       <div className="space-y-4">
         {services.map((service, index) => (
-          <div key={index} className="border border-gray-200 rounded-lg p-4 space-y-3">
+          <div key={index} className="border border-stone-200 rounded-lg p-4 space-y-3">
             <div className="flex items-center justify-between">
-              <span className="text-sm font-medium text-gray-500">Service {index + 1}</span>
+              <span className="text-sm font-medium text-stone-500">Service {index + 1}</span>
               {services.length > 1 && (
                 <button
                   type="button"
@@ -132,27 +132,27 @@ export function ServicesStep({ tenantId, onNext, onBack }: ServicesStepProps) {
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
-                <label className="block text-sm text-gray-600 mb-1">Name *</label>
+                <label className="block text-sm text-stone-600 mb-1">Name *</label>
                 <input
                   value={service.name}
                   onChange={(e) => updateService(index, 'name', e.target.value)}
                   placeholder="e.g., Haircut"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-3 py-2 border border-stone-300 rounded-lg text-sm focus:ring-2 focus:ring-violet-500 focus:border-transparent"
                 />
               </div>
 
               <div>
-                <label className="block text-sm text-gray-600 mb-1">Category</label>
+                <label className="block text-sm text-stone-600 mb-1">Category</label>
                 <input
                   value={service.category}
                   onChange={(e) => updateService(index, 'category', e.target.value)}
                   placeholder="e.g., Cuts"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-3 py-2 border border-stone-300 rounded-lg text-sm focus:ring-2 focus:ring-violet-500 focus:border-transparent"
                 />
               </div>
 
               <div>
-                <label className="block text-sm text-gray-600 mb-1">Price ($)</label>
+                <label className="block text-sm text-stone-600 mb-1">Price ($)</label>
                 <div className="flex gap-2">
                   <input
                     type="number"
@@ -161,12 +161,12 @@ export function ServicesStep({ tenantId, onNext, onBack }: ServicesStepProps) {
                     value={service.price}
                     onChange={(e) => updateService(index, 'price', e.target.value)}
                     placeholder="0.00"
-                    className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="flex-1 px-3 py-2 border border-stone-300 rounded-lg text-sm focus:ring-2 focus:ring-violet-500 focus:border-transparent"
                   />
                   <select
                     value={service.priceType}
                     onChange={(e) => updateService(index, 'priceType', e.target.value)}
-                    className="px-2 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="px-2 py-2 border border-stone-300 rounded-lg text-sm focus:ring-2 focus:ring-violet-500 focus:border-transparent"
                   >
                     <option value="fixed">Fixed</option>
                     <option value="hourly">Hourly</option>
@@ -177,24 +177,24 @@ export function ServicesStep({ tenantId, onNext, onBack }: ServicesStepProps) {
               </div>
 
               <div>
-                <label className="block text-sm text-gray-600 mb-1">Duration (minutes)</label>
+                <label className="block text-sm text-stone-600 mb-1">Duration (minutes)</label>
                 <input
                   type="number"
                   min="0"
                   value={service.duration}
                   onChange={(e) => updateService(index, 'duration', e.target.value)}
                   placeholder="30"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-3 py-2 border border-stone-300 rounded-lg text-sm focus:ring-2 focus:ring-violet-500 focus:border-transparent"
                 />
               </div>
 
               <div className="sm:col-span-2">
-                <label className="block text-sm text-gray-600 mb-1">Description</label>
+                <label className="block text-sm text-stone-600 mb-1">Description</label>
                 <input
                   value={service.description}
                   onChange={(e) => updateService(index, 'description', e.target.value)}
                   placeholder="Brief description of this service"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-3 py-2 border border-stone-300 rounded-lg text-sm focus:ring-2 focus:ring-violet-500 focus:border-transparent"
                 />
               </div>
             </div>
@@ -206,14 +206,14 @@ export function ServicesStep({ tenantId, onNext, onBack }: ServicesStepProps) {
         <button
           type="button"
           onClick={onBack}
-          className="px-6 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+          className="px-6 py-2 border border-stone-300 text-stone-700 rounded-lg hover:bg-stone-50 transition-colors"
         >
           Back
         </button>
         <button
           type="submit"
           disabled={saving}
-          className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 transition-colors"
+          className="px-6 py-2 bg-violet-600 text-white rounded-lg hover:bg-violet-700 disabled:opacity-50 transition-colors"
         >
           {saving ? 'Saving...' : 'Next'}
         </button>

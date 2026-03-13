@@ -3,7 +3,7 @@ import { createAdminClient } from '@/lib/supabase/admin'
 import { buildBusinessContext } from '@/lib/ai/context-builder'
 import { runAgentSync } from '@/lib/ai/agent'
 import { normalizeIncomingMessage, resolveTenantFromChannel } from '@/lib/channels/normalizer'
-import { sendSms } from '@/lib/twilio/client'
+import { sendSms, validateTwilioSignature } from '@/lib/twilio/client'
 import { handleApprovalSmsReply } from '@/lib/approvals/engine'
 import { ModelMessage } from 'ai'
 
@@ -14,6 +14,19 @@ export async function POST(request: NextRequest) {
     formData.forEach((value, key) => {
       body[key] = value.toString()
     })
+
+    // Validate Twilio signature in production
+    if (process.env.NODE_ENV === 'production') {
+      const signature = request.headers.get('x-twilio-signature')
+      if (signature) {
+        const requestUrl = request.url
+        const valid = await validateTwilioSignature(requestUrl, body, signature)
+        if (!valid) {
+          console.warn('Invalid Twilio signature on SMS webhook')
+          return new NextResponse('Forbidden', { status: 403 })
+        }
+      }
+    }
 
     const from = body.From
     const to = body.To
@@ -31,6 +44,17 @@ export async function POST(request: NextRequest) {
     }
 
     const supabase = createAdminClient()
+
+    // Verify SMS is enabled for this tenant
+    const { data: smsConfig } = await supabase
+      .from('business_config')
+      .select('sms_enabled')
+      .eq('tenant_id', tenantId)
+      .single()
+
+    if (!smsConfig?.sms_enabled) {
+      return twimlResponse('SMS is not enabled for this business.')
+    }
 
     // Check if this is an approval reply (YES/NO)
     const approvalHandled = await handleApprovalSmsReply(supabase, tenantId, from, messageBody)
