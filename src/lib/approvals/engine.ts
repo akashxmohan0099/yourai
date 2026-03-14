@@ -146,19 +146,46 @@ export async function handleApprovalSmsReply(
     return false
   }
 
-  // Find the most recent pending approval
-  const { data: pendingApproval } = await supabase
-    .from('approvals')
-    .select('id')
-    .eq('tenant_id', tenantId)
-    .eq('status', 'pending')
-    .order('created_at', { ascending: false })
-    .limit(1)
-    .single()
+  // Try to extract Ref ID from the message (format: "YES Ref: abc12345" or just "YES")
+  const refMatch = messageBody.match(/Ref:\s*([a-f0-9]{8})/i)
+
+  let pendingApproval: { id: string } | null = null
+
+  if (refMatch) {
+    // Match by the short ref prefix
+    const refPrefix = refMatch[1].toLowerCase()
+    const { data: approvals } = await supabase
+      .from('approvals')
+      .select('id')
+      .eq('tenant_id', tenantId)
+      .eq('status', 'pending')
+      .order('created_at', { ascending: false })
+
+    pendingApproval = approvals?.find((a: { id: string }) => a.id.toLowerCase().startsWith(refPrefix)) || null
+  }
 
   if (!pendingApproval) {
-    await sendSms(fromPhone, 'No pending approvals found.')
-    return true
+    // Fallback: only resolve most recent if there's exactly ONE pending approval
+    const { data: allPending } = await supabase
+      .from('approvals')
+      .select('id')
+      .eq('tenant_id', tenantId)
+      .eq('status', 'pending')
+      .order('created_at', { ascending: false })
+
+    if (!allPending || allPending.length === 0) {
+      await sendSms(fromPhone, 'No pending approvals found.')
+      return true
+    }
+
+    if (allPending.length > 1) {
+      // Multiple pending — require the Ref ID to avoid resolving wrong one
+      const refs = allPending.slice(0, 5).map((a: { id: string }) => a.id.slice(0, 8)).join(', ')
+      await sendSms(fromPhone, `Multiple pending approvals. Please include the Ref number in your reply (e.g. "YES Ref: ${allPending[0].id.slice(0, 8)}"). Pending refs: ${refs}`)
+      return true
+    }
+
+    pendingApproval = allPending[0]
   }
 
   const isApproved = ['YES', 'Y', 'APPROVE'].includes(normalized)

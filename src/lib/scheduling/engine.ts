@@ -114,6 +114,19 @@ export async function rescheduleAppointment(
     }
   }
 
+  // Check availability rules (same check as createAppointment)
+  const available = await checkStaffAvailability(
+    supabase,
+    tenantId,
+    newStartsAt,
+    newEndsAt,
+    existing.staff_id
+  )
+
+  if (!available) {
+    return { success: false, error: 'This time slot is outside of available hours' }
+  }
+
   const { error } = await supabase
     .from('appointments')
     .update({
@@ -201,7 +214,7 @@ export async function findAvailableSlots(
   date: Date,
   durationMinutes: number,
   staffId?: string,
-  timezone: string = 'America/New_York'
+  timezone: string = 'Australia/Sydney'
 ): Promise<TimeSlot[]> {
   // Get business hours for the day
   const dayOfWeek = date.getDay()

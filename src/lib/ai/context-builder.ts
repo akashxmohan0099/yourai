@@ -69,7 +69,7 @@ export async function buildBusinessContext(
     email: config?.email || undefined,
     website: config?.website || undefined,
     hours: config?.hours || {},
-    timezone: config?.timezone || 'America/New_York',
+    timezone: config?.timezone || 'Australia/Sydney',
     services: services.map((s: any) => ({
       name: s.name,
       description: s.description,

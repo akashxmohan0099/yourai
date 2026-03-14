@@ -87,7 +87,26 @@ export function createAppointmentTool(
         }
       }
 
-      const startsAt = new Date(`${date}T${time}:00`)
+      // Use business timezone for date construction
+      const timezone = context.timezone || 'Australia/Sydney'
+      // Construct an ISO string with the timezone offset by using Intl to resolve the offset
+      const tzDate = new Date(`${date}T${time}:00`)
+      // Convert from business-local to UTC properly
+      const formatter = new Intl.DateTimeFormat('en-AU', {
+        timeZone: timezone,
+        year: 'numeric', month: '2-digit', day: '2-digit',
+        hour: '2-digit', minute: '2-digit', second: '2-digit',
+        hour12: false,
+      })
+      // Find the UTC offset for this timezone at this date
+      const utcDate = new Date(`${date}T${time}:00Z`)
+      const tzParts = formatter.formatToParts(utcDate)
+      const tzHour = parseInt(tzParts.find((p: Intl.DateTimeFormatPart) => p.type === 'hour')?.value || '0')
+      const utcHour = utcDate.getUTCHours()
+      const offsetHours = tzHour - utcHour
+      // Create the date as if in business timezone
+      const startsAt = new Date(`${date}T${time}:00Z`)
+      startsAt.setUTCHours(startsAt.getUTCHours() - offsetHours)
       const endsAt = new Date(startsAt.getTime() + duration * 60 * 1000)
 
       if (isNaN(startsAt.getTime())) {

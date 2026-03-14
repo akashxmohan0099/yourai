@@ -189,14 +189,18 @@ export async function runInvoiceReminderCampaign() {
       supabase,
     })
 
-    await supabase.from('campaign_sends').insert({
-      campaign_id: null,
+    const { error: insertError } = await supabase.from('campaign_sends').insert({
       tenant_id: invoice.tenant_id,
       client_id: client.id,
       channel: client.phone ? 'sms' : 'email',
       status: 'pending',
       content: messageText,
     })
+
+    if (insertError) {
+      console.error(`Failed to insert invoice reminder campaign_send for invoice ${invoice.id}:`, insertError)
+      continue
+    }
 
     reminded++
   }

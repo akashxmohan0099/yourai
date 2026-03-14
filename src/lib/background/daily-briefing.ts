@@ -9,15 +9,11 @@ import { sendEmail } from '@/lib/nylas/client'
 export async function generateDailyBriefings() {
   const supabase = createAdminClient()
 
-  // Find tenants that need briefing at this hour
-  const currentHour = new Date().getUTCHours()
-  const currentHourStr = `${String(currentHour).padStart(2, '0')}:00`
-
+  // Find all tenants with briefings enabled, then filter by their local hour
   const { data: configs } = await supabase
     .from('business_config')
-    .select('tenant_id, business_name, timezone, briefing_channels')
+    .select('tenant_id, business_name, timezone, briefing_channels, briefing_time')
     .eq('briefing_enabled', true)
-    .eq('briefing_time', currentHourStr)
 
   if (!configs || configs.length === 0) {
     return { briefingsGenerated: 0 }
@@ -27,8 +23,17 @@ export async function generateDailyBriefings() {
 
   for (const config of configs) {
     const tenantId = config.tenant_id
-    const today = new Date()
-    const todayStr = today.toISOString().split('T')[0]
+    const tz = config.timezone || 'Australia/Sydney'
+
+    // Get the current hour in the business's timezone
+    const now = new Date()
+    const localHourStr = now.toLocaleString('en-AU', { timeZone: tz, hour: '2-digit', hour12: false }).padStart(2, '0') + ':00'
+
+    // Only generate if it's the right hour in their timezone
+    if (localHourStr !== (config.briefing_time || '08:00')) continue
+
+    // Get today's date in the business timezone
+    const todayStr = now.toLocaleDateString('en-CA', { timeZone: tz }) // en-CA gives YYYY-MM-DD
 
     // Check if briefing already generated today
     const { data: existing } = await supabase
@@ -41,7 +46,7 @@ export async function generateDailyBriefings() {
     if (existing && existing.length > 0) continue
 
     // Gather data for briefing
-    const yesterday = new Date(today)
+    const yesterday = new Date(now)
     yesterday.setDate(yesterday.getDate() - 1)
 
     const [appointments, conversations, pendingApprovals, newClients] =
