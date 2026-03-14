@@ -52,15 +52,29 @@ export async function POST(
   const monday = new Date(today)
   monday.setDate(today.getDate() + daysUntilMonday)
 
+  const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December']
+  const dayNames = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
+
+  function ordinal(n: number) {
+    const s = ['th', 'st', 'nd', 'rd']
+    const v = n % 100
+    return n + (s[(v - 20) % 10] || s[v] || s[0])
+  }
+
   const weekDates = Array.from({ length: 7 }, (_, i) => {
     const d = new Date(monday)
     d.setDate(monday.getDate() + i)
     return d.toISOString().split('T')[0]
   })
 
-  const weekStart = weekDates[0]
-  const dayNames = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
-  const dateList = weekDates.map((d, i) => `${dayNames[i]} ${d}`).join(', ')
+  // Human-readable dates for the voice prompt (e.g. "Monday the 16th of March")
+  const weekDatesSpoken = weekDates.map((iso, i) => {
+    const d = new Date(iso + 'T00:00:00')
+    return `${dayNames[i]} the ${ordinal(d.getDate())} of ${monthNames[d.getMonth()]}`
+  })
+
+  const weekStartSpoken = weekDatesSpoken[0] // e.g. "Monday the 16th of March"
+  const dateList = weekDatesSpoken.join(', ')
 
   const appUrl = (process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000').trim()
   const serverFields = buildVapiServerFields(`${appUrl}/api/voice/respond`)
@@ -77,31 +91,32 @@ export async function POST(
       customer: { number: phoneNumber },
       assistant: {
         name: 'Availability Checker',
-        firstMessage: `Hi ${member.name}! This is the AI assistant from ${config.business_name}. I'm calling to check your availability for the week starting ${weekStart}. What days and times can you work?`,
+        firstMessage: `Hey ${member.name}! It's the assistant from ${config.business_name}. Just checking in on your availability for the week starting ${weekStartSpoken}. What days and times work for you?`,
         model: {
           provider: 'anthropic',
           model: 'claude-sonnet-4-20250514',
           messages: [
             {
               role: 'system',
-              content: `You are calling ${member.name} to check their work availability for the upcoming week.
+              content: `You are calling ${member.name} on the phone to check their work availability for the upcoming week.
 
-The dates are: ${dateList}
+The week covers: ${dateList}.
 
 Your job:
 1. Ask what days and times they can work this week
-2. Go through each day if needed — but be conversational, not robotic
-3. Confirm the full schedule back to them before ending the call
+2. Go through each day if needed — but keep it casual
+3. Confirm the full schedule back to them before ending
 4. Keep it brief and friendly
 
-CONVERSATION RULES:
+IMPORTANT — SPEAKING RULES:
+- This is a phone call. Talk like a real person, not a robot.
+- NEVER read out numbers, codes, or dates in a technical format. Say "Monday" not "2026-03-16". Say "nine to five" not "09:00 to 17:00".
+- Only refer to days by name: Monday, Tuesday, etc. Never mention year or month numbers.
 - Ask one question at a time
-- Keep responses short (1-2 sentences)
-- Use natural language — "What about Thursday?" not "Please state your availability for Thursday"
-- If they give a range like "Monday to Wednesday, 9 to 5", accept that — don't ask each day separately
-- Confirm the full week at the end: "So just to confirm — Mon-Wed 9-5, Thu off, Fri 9-3, Sat-Sun off. Is that right?"
-
-This is a phone call. Be natural and concise.`,
+- Keep responses to 1-2 short sentences
+- If they give a range like "Monday to Wednesday, nine to five", accept it — don't repeat each day back individually
+- When confirming at the end, keep it quick: "Cool, so Monday to Wednesday nine to five, Thursday off, Friday nine to three, and the weekend off — does that sound right?"
+- Be warm and casual. Use "hey", "cool", "awesome", "no worries" naturally.`,
             },
           ],
         },
@@ -113,7 +128,7 @@ This is a phone call. Be natural and concise.`,
         type: 'availability_check',
         teamMemberId: id,
         tenantId,
-        weekStart,
+        weekStart: weekDates[0],
         weekDates,
       },
     }),
